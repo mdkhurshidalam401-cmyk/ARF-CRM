@@ -3,89 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple CRM</title>
+    <title>ARF-CRM | Lead & Client Management</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">🚀 Client CRM Dashboard</h1>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
-        <!-- Add Lead Form -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h2 class="text-xl font-semibold mb-4">Add New Lead / Client</h2>
-            <form id="crmForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input type="text" id="name" placeholder="Client Name" required class="border p-2 rounded">
-                <input type="email" id="email" placeholder="Email Address" required class="border p-2 rounded">
-                <select id="status" class="border p-2 rounded">
-                    <option value="New Lead">New Lead</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Converted">Converted</option>
-                </select>
-                <button type="submit" class="bg-blue-600 text-white font-semibold p-2 rounded hover:bg-blue-700">
-                    + Add Client
-                </button>
-            </form>
+    <!-- Top Navigation Bar -->
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 p-2 rounded-lg">
+                        <i class="fa-solid fa-chart-pie text-white text-xl"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-wide">ARF-CRM</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportToCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border border-slate-700">
+                        <i class="fa-solid fa-file-csv text-green-400"></i> 
+                        <span class="hidden sm:inline">Export Excel/CSV</span>
+                    </button>
+                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-plus"></i> Add New Lead
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Dashboard Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Leads</p>
+                    <h3 id="stat-total" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="bg-blue-50 p-3.5 rounded-xl text-blue-600">
+                    <i class="fa-solid fa-users text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">New Leads</p>
+                    <h3 id="stat-new" class="text-3xl font-bold text-amber-600 mt-1">0</h3>
+                </div>
+                <div class="bg-amber-50 p-3.5 rounded-xl text-amber-600">
+                    <i class="fa-solid fa-bolt text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Follow-Up / In Progress</p>
+                    <h3 id="stat-followup" class="text-3xl font-bold text-purple-600 mt-1">0</h3>
+                </div>
+                <div class="bg-purple-50 p-3.5 rounded-xl text-purple-600">
+                    <i class="fa-solid fa-phone-volume text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Converted (Won)</p>
+                    <h3 id="stat-converted" class="text-3xl font-bold text-emerald-600 mt-1">0</h3>
+                </div>
+                <div class="bg-emerald-50 p-3.5 rounded-xl text-emerald-600">
+                    <i class="fa-solid fa-circle-check text-2xl"></i>
+                </div>
+            </div>
         </div>
 
-        <!-- Clients Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-200 text-gray-700">
-                        <th class="p-4">Name</th>
-                        <th class="p-4">Email</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="clientList" class="divide-y"></tbody>
-            </table>
+        <!-- Search and Filter Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div class="relative w-full md:w-96">
+                <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400"></i>
+                <input type="text" id="searchInput" oninput="renderLeads()" placeholder="Search by name, phone, email or company..." 
+                    class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex gap-3 w-full md:w-auto">
+                <select id="statusFilter" onchange="renderLeads()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full md:w-48">
+                    <option value="All">All Statuses</option>
+                    <option value="New Lead">New Lead</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Converted">Converted</option>
+                    <option value="Lost">Lost</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Leads Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-semibold">
+                            <th class="p-4">Client / Company</th>
+                            <th class="p-4">Contact</th>
+                            <th class="p-4">Deal Value</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Notes / Follow-up</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadList" class="divide-y divide-slate-200 text-sm">
+                        <!-- Leads will be injected here by app.js -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Empty State Message -->
+            <div id="emptyState" class="hidden text-center py-12 px-4">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                <p class="text-slate-500 font-medium">No leads found</p>
+                <p class="text-slate-400 text-xs mt-1">Click "+ Add New Lead" at the top to add your first client.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add / Edit Lead Modal -->
+    <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden animate-fade-in">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 id="modalTitle" class="text-lg font-semibold">Add New Lead</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="leadForm" class="p-6 space-y-4">
+                <input type="hidden" id="editIndex">
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Client Name *</label>
+                    <input type="text" id="name" required placeholder="e.g. Rahul Sharma" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Phone (WhatsApp) *</label>
+                        <input type="tel" id="phone" required placeholder="e.g. 9876543210" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
+                        <input type="email" id="email" placeholder="client@email.com" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Company / Project</label>
+                        <input type="text" id="company" placeholder="e.g. ABC Enterprises" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Deal Value (₹)</label>
+                        <input type="number" id="value" placeholder="e.g. 25000" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Lead Status</label>
+                    <select id="status" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                        <option value="New Lead">New Lead</option>
+                        <option value="Follow-up">Follow-up</option>
+                        <option value="Converted">Converted</option>
+                        <option value="Lost">Lost</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Follow-up Notes / Requirement</label>
+                    <textarea id="notes" rows="2" placeholder="Call tomorrow at 4 PM regarding website quotation..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-600 text-sm hover:bg-slate-100">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm">Save Lead</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script>
-        const form = document.getElementById('crmForm');
-        const clientList = document.getElementById('clientList');
-        let clients = JSON.parse(localStorage.getItem('crm_clients')) || [];
-
-        function renderClients() {
-            clientList.innerHTML = '';
-            clients.forEach((client, index) => {
-                clientList.innerHTML += `
-                    <tr>
-                        <td class="p-4 font-medium">${client.name}</td>
-                        <td class="p-4 text-gray-600">${client.email}</td>
-                        <td class="p-4">
-                            <span class="px-2 py-1 text-sm rounded bg-blue-100 text-blue-800">${client.status}</span>
-                        </td>
-                        <td class="p-4">
-                            <button onclick="deleteClient(${index})" class="text-red-500 hover:underline">Delete</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newClient = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                status: document.getElementById('status').value
-            };
-            clients.push(newClient);
-            localStorage.setItem('crm_clients', JSON.stringify(clients));
-            form.reset();
-            renderClients();
-        });
-
-        function deleteClient(index) {
-            clients.splice(index, 1);
-            localStorage.setItem('crm_clients', JSON.stringify(clients));
-            renderClients();
-        }
-
-        renderClients();
-    </script>
+    <!-- Main JavaScript File -->
+    <script src="app.js"></script>
 </body>
 </html>

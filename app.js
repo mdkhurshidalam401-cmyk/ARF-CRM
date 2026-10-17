@@ -1,4 +1,4 @@
-// ================= ARF FOOD MACHINERY ERP - APP.JS =================
+// ================= ARF FOOD PROCESSING & PACKAGING INDUSTRIES - APP.JS =================
 
 let machines = JSON.parse(localStorage.getItem('arf_machines_clean')) || [];
 let leads = JSON.parse(localStorage.getItem('arf_leads_clean')) || [];
@@ -13,7 +13,7 @@ function saveAll() {
 }
 
 function clearAllData() {
-    if (confirm("Are you sure you want to delete all Leads, Machines, and Bills?")) {
+    if (confirm("Are you sure you want to delete all Leads, Machines, and Documents?")) {
         machines = [];
         leads = [];
         docs = [];
@@ -62,12 +62,11 @@ function switchTab(tab) {
     const titles = {
         dashboard: "Machinery Sales & Leads CRM",
         inventory: "Food Processing Machinery Inventory",
-        billing: "Quotations, Proforma Invoices (PI) & GST Bills"
+        billing: "Quotations, Proforma Invoices & GST Bills"
     };
     document.getElementById('pageTitle').innerText = titles[tab];
 }
 
-// Render Leads
 function renderLeads() {
     const q = document.getElementById('leadSearch').value.toLowerCase();
     const status = document.getElementById('leadStatusFilter').value;
@@ -121,7 +120,6 @@ function renderLeads() {
     });
 }
 
-// Render Machine Inventory
 function renderInventory() {
     const tbody = document.getElementById('inventoryTableBody');
     tbody.innerHTML = '';
@@ -132,10 +130,6 @@ function renderInventory() {
     }
 
     machines.forEach(m => {
-        const stockBadge = m.stock <= 2
-            ? `<span class="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-full font-bold text-[11px]">Low: ${m.stock} Units</span>`
-            : `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">${m.stock} Units Ready</span>`;
-
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50">
                 <td class="py-3.5 px-5">
@@ -146,10 +140,10 @@ function renderInventory() {
                 <td class="py-3.5 px-4 text-slate-600">${m.spec}</td>
                 <td class="py-3.5 px-4 font-mono text-slate-500">${m.hsn}</td>
                 <td class="py-3.5 px-4 font-bold text-slate-800">${formatINR(m.price)}</td>
-                <td class="py-3.5 px-4">${stockBadge}</td>
+                <td class="py-3.5 px-4"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">${m.stock} Units Ready</span></td>
                 <td class="py-3.5 px-5 text-right space-x-1">
-                    <button onclick="adjustStock(${m.id}, 1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-bold" title="Add Stock">+</button>
-                    <button onclick="adjustStock(${m.id}, -1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-bold" title="Reduce Stock">-</button>
+                    <button onclick="adjustStock(${m.id}, 1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-bold">+</button>
+                    <button onclick="adjustStock(${m.id}, -1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-bold">-</button>
                     <button onclick="deleteMachine(${m.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>
@@ -166,7 +160,6 @@ function adjustStock(id, delta) {
     }
 }
 
-// Render Quotations, PI & Bills
 function filterDocs(type) {
     currentDocFilter = type;
     renderDocs();
@@ -185,7 +178,7 @@ function renderDocs() {
     const filtered = docs.filter(d => currentDocFilter === 'All' || d.type === currentDocFilter);
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No Quotations, PI, or Bills generated yet. Click <strong>"+ New Quotation / PI / Bill"</strong> above.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No documents generated yet. Click <strong>"+ New Quotation / PI / Bill"</strong> above.</td></tr>`;
         return;
     }
 
@@ -195,9 +188,9 @@ function renderDocs() {
 
         let convertBtn = '';
         if (d.type === 'Quotation') {
-            convertBtn = `<button onclick="convertDoc(${d.id}, 'Proforma Invoice')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-semibold text-[11px]" title="Convert Quote to PI">➔ Make PI</button>`;
+            convertBtn = `<button onclick="convertDoc(${d.id}, 'Proforma Invoice')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-semibold text-[11px]">➔ Make PI</button>`;
         } else if (d.type === 'Proforma Invoice') {
-            convertBtn = `<button onclick="convertDoc(${d.id}, 'Tax Invoice')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold text-[11px]" title="Convert PI to Final GST Bill">➔ Make Final Bill</button>`;
+            convertBtn = `<button onclick="convertDoc(${d.id}, 'Tax Invoice')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold text-[11px]">➔ Make Bill</button>`;
         }
 
         tbody.innerHTML += `
@@ -206,20 +199,16 @@ function renderDocs() {
                     <p class="font-bold text-slate-800">${d.docNo}</p>
                     <p class="text-[11px] text-slate-400">${d.date}</p>
                 </td>
-                <td class="py-3.5 px-4">
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${typeStyles[d.type]}">${d.type}</span>
-                </td>
+                <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${typeStyles[d.type]}">${d.type}</span></td>
                 <td class="py-3.5 px-4">
                     <p class="font-bold text-slate-800">${d.client}</p>
                     <p class="text-[11px] text-slate-400">${d.address}</p>
                 </td>
-                <td class="py-3.5 px-4 max-w-xs truncate font-medium text-slate-600" title="${itemSummary}">${itemSummary}</td>
+                <td class="py-3.5 px-4 max-w-xs truncate text-slate-600">${itemSummary}</td>
                 <td class="py-3.5 px-4 font-extrabold text-slate-900">${formatINR(totals.grandTotal)}</td>
                 <td class="py-3.5 px-5 text-right space-x-1">
                     ${convertBtn}
-                    <button onclick="previewDoc(${d.id})" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-700 text-white rounded-lg font-semibold text-[11px]">
-                        <i class="fa-solid fa-print mr-1"></i> Print / PDF
-                    </button>
+                    <button onclick="previewDoc(${d.id})" class="px-2.5 py-1 bg-slate-900 text-white rounded-lg font-semibold text-[11px]"><i class="fa-solid fa-print mr-1"></i> Print</button>
                     <button onclick="deleteDoc(${d.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>
@@ -230,20 +219,17 @@ function renderDocs() {
 function convertDoc(id, targetType) {
     const orig = docs.find(d => d.id === id);
     if (!orig) return;
-
-    const prefix = targetType === 'Proforma Invoice' ? 'ARF/PI/2026/' : 'ARF/INV/2026/';
+    const prefix = targetType === 'Proforma Invoice' ? 'ARF/PI/26-27/' : 'ARF/INV/26-27/';
     const newDoc = JSON.parse(JSON.stringify(orig));
     newDoc.id = Date.now();
     newDoc.type = targetType;
     newDoc.date = new Date().toISOString().slice(0, 10);
-    newDoc.docNo = prefix + String(docs.length + 1).padStart(2, '0');
+    newDoc.docNo = prefix + Math.floor(100 + Math.random() * 900);
 
     if (targetType === 'Tax Invoice') {
         newDoc.items.forEach(item => {
-            const invMachine = machines.find(m => m.sku === item.sku);
-            if (invMachine && invMachine.stock >= item.qty) {
-                invMachine.stock -= item.qty;
-            }
+            const invM = machines.find(m => m.sku === item.sku);
+            if (invM && invM.stock >= item.qty) invM.stock -= item.qty;
         });
     }
 
@@ -268,29 +254,26 @@ function openDocModal(defaultType = 'Quotation', prefillLead = null) {
     }
 
     const m = document.getElementById('docModal');
-    m.classList.remove('hidden');
-    m.classList.add('flex');
+    m.classList.remove('hidden'); m.classList.add('flex');
 }
 
 function addDocItemRow(prefillName = '', prefillPrice = '') {
     const container = document.getElementById('docItemsContainer');
-    const invOptions = `<option value="">-- Choose from Inventory (Optional) --</option>` +
+    const invOptions = `<option value="">-- Choose from Inventory --</option>` +
         machines.map(m => `<option value="${m.id}">${m.sku} - ${m.name} (${formatINR(m.price)})</option>`).join('');
 
     const row = document.createElement('div');
     row.className = "p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 doc-item-row";
     row.innerHTML = `
         <div class="flex justify-between items-center gap-2">
-            <select onchange="syncRowPrice(this)" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-slate-600 machine-select">
-                ${invOptions}
-            </select>
-            <button type="button" onclick="this.closest('.doc-item-row').remove()" class="text-rose-500 hover:text-rose-700 px-2"><i class="fa-solid fa-trash"></i></button>
+            <select onchange="syncRowPrice(this)" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-slate-600 machine-select">${invOptions}</select>
+            <button type="button" onclick="this.closest('.doc-item-row').remove()" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button>
         </div>
         <div class="grid grid-cols-12 gap-2">
-            <input type="text" value="${prefillName}" required placeholder="Machine Name & Model *" class="col-span-5 border border-slate-200 rounded-lg px-2.5 py-1.5 item-name">
-            <input type="text" placeholder="Spec (e.g. 5HP SS)" class="col-span-3 border border-slate-200 rounded-lg px-2.5 py-1.5 item-spec">
+            <input type="text" value="${prefillName}" required placeholder="Machine Name" class="col-span-5 border border-slate-200 rounded-lg px-2.5 py-1.5 item-name">
+            <input type="text" placeholder="Spec" class="col-span-3 border border-slate-200 rounded-lg px-2.5 py-1.5 item-spec">
             <input type="number" value="1" min="1" required placeholder="Qty" class="col-span-2 border border-slate-200 rounded-lg px-2.5 py-1.5 item-qty">
-            <input type="number" value="${prefillPrice}" required placeholder="Rate (₹) *" class="col-span-2 border border-slate-200 rounded-lg px-2.5 py-1.5 item-price">
+            <input type="number" value="${prefillPrice}" required placeholder="Rate" class="col-span-2 border border-slate-200 rounded-lg px-2.5 py-1.5 item-price">
         </div>
     `;
     container.appendChild(row);
@@ -311,13 +294,13 @@ function syncRowPrice(selectEl) {
 document.getElementById('docForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const type = document.getElementById('d_type').value;
-    const prefixMap = { 'Quotation': 'ARF/QTN/2026/', 'Proforma Invoice': 'ARF/PI/2026/', 'Tax Invoice': 'ARF/INV/2026/' };
+    const prefixMap = { 'Quotation': 'ARF/QTN/26-27/', 'Proforma Invoice': 'ARF/PI/26-27/', 'Tax Invoice': 'ARF/INV/26-27/' };
 
     const rows = document.querySelectorAll('.doc-item-row');
     const items = [];
     rows.forEach(r => {
         const name = r.querySelector('.item-name').value.trim();
-        const spec = r.querySelector('.item-spec').value.trim() || 'Standard Grade';
+        const spec = r.querySelector('.item-spec').value.trim() || 'Standard';
         const qty = Number(r.querySelector('.item-qty').value || 1);
         const price = Number(r.querySelector('.item-price').value || 0);
         const sku = r.dataset.sku || 'ARF-MCH';
@@ -334,7 +317,7 @@ document.getElementById('docForm').addEventListener('submit', function(e) {
 
     const newDoc = {
         id: Date.now(),
-        docNo: prefixMap[type] + String(docs.length + 1).padStart(2, '0'),
+        docNo: prefixMap[type] + Math.floor(100 + Math.random() * 900),
         date: new Date().toISOString().slice(0, 10),
         type,
         client: document.getElementById('d_client').value.trim(),
@@ -359,94 +342,112 @@ function previewDoc(id) {
     const d = docs.find(x => x.id === id);
     if (!d) return;
     const t = calcDocTotals(d);
+    const taxableAmt = t.subTotal + Number(d.freight || 0);
+    const cgstAmt = t.gstAmt / 2;
+    const sgstAmt = t.gstAmt / 2;
 
     const rowsHTML = d.items.map((item, idx) => `
-        <tr class="border-b border-slate-200">
+        <tr class="border-b border-slate-300">
             <td class="py-2.5 px-3 text-center">${idx + 1}</td>
             <td class="py-2.5 px-3">
-                <p class="font-bold text-slate-800">${item.name}</p>
-                <p class="text-[11px] text-slate-500">Spec: ${item.spec}</p>
+                <p class="font-bold text-slate-900">${item.name}</p>
+                <p class="text-[11px] text-slate-600">Spec: ${item.spec}</p>
             </td>
             <td class="py-2.5 px-3 text-center font-mono">${item.hsn}</td>
-            <td class="py-2.5 px-3 text-center font-bold">${item.qty} Nos</td>
+            <td class="py-2.5 px-3 text-center font-bold">${item.qty}</td>
+            <td class="py-2.5 px-3 text-center">Nos</td>
             <td class="py-2.5 px-3 text-right">${formatINR(item.price)}</td>
             <td class="py-2.5 px-3 text-right font-bold">${formatINR(item.price * item.qty)}</td>
         </tr>
     `).join('');
 
     document.getElementById('printArea').innerHTML = `
-        <div class="border-2 border-slate-800 p-6 rounded-lg">
-            <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4">
+        <div class="border-2 border-slate-900 p-6 rounded-lg bg-white text-slate-900 text-xs">
+            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-4">
                 <div>
-                    <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">ARF FOOD PROCESSING MACHINERY</h1>
-                    <p class="text-xs text-slate-600">Manufacturers & Suppliers of Commercial Food Processing Machines</p>
-                    <p class="text-xs font-bold text-slate-800 mt-1">GSTIN: 09AAACA1234A1Z5</p>
+                    <p class="text-[10px] font-bold text-slate-600">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
+                    <h1 class="text-xl font-extrabold text-orange-600 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
+                    <p class="text-[11px] text-slate-700 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
+                    <p class="text-[10px] text-slate-500 mt-1">MSME REG: UP-28-0213888 | GSTIN: 09LHAPK3181L1ZV</p>
                 </div>
                 <div class="text-right">
                     <span class="inline-block px-3 py-1 bg-slate-900 text-white font-extrabold text-sm uppercase tracking-wider rounded">${d.type}</span>
-                    <p class="font-bold text-slate-800 mt-2">Doc No: ${d.docNo}</p>
-                    <p class="text-slate-500">Date: ${d.date}</p>
+                    <p class="font-bold text-slate-900 mt-2">No: ${d.docNo}</p>
+                    <p class="text-slate-600">Date: ${d.date}</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 py-4 border-b border-slate-300">
+            <div class="grid grid-cols-2 gap-4 py-3 border-b border-slate-300">
                 <div>
-                    <p class="text-[10px] font-bold uppercase text-slate-400">Billed / Quoted To:</p>
+                    <p class="text-[10px] font-bold uppercase text-orange-600">Billed To (Buyer Details):</p>
                     <p class="font-bold text-sm text-slate-900 mt-0.5">${d.client}</p>
-                    <p class="text-slate-600">${d.address}</p>
-                    <p class="text-slate-600 mt-0.5">Phone: ${d.phone}</p>
-                    <p class="font-bold text-slate-800 mt-0.5">Party GSTIN: ${d.gstin}</p>
+                    <p class="text-slate-700">${d.address}</p>
+                    <p class="text-slate-700 mt-0.5">Phone: ${d.phone}</p>
+                    <p class="font-bold text-slate-800 mt-0.5">GSTIN: ${d.gstin}</p>
                 </div>
-                <div class="text-right">
-                    <p class="text-[10px] font-bold uppercase text-slate-400">Terms & Conditions:</p>
-                    <p class="text-slate-700 font-medium mt-0.5">${d.terms}</p>
-                    <p class="text-slate-500 mt-1">1 Year Standard Manufacturing Warranty</p>
+                <div>
+                    <p class="text-[10px] font-bold uppercase text-orange-600">Shipped To / Place of Supply:</p>
+                    <p class="font-bold text-sm text-slate-900 mt-0.5">${d.client}</p>
+                    <p class="text-slate-700">${d.address}</p>
+                    <p class="text-slate-700 mt-1">State: Uttar Pradesh (09)</p>
                 </div>
             </div>
 
             <table class="w-full text-left border-collapse my-4">
                 <thead>
-                    <tr class="bg-slate-100 border-y border-slate-300 text-[11px] font-bold uppercase text-slate-700">
-                        <th class="py-2 px-3 text-center">S.No</th>
-                        <th class="py-2 px-3">Machine Description & Specifications</th>
-                        <th class="py-2 px-3 text-center">HSN</th>
-                        <th class="py-2 px-3 text-center">Qty</th>
-                        <th class="py-2 px-3 text-right">Unit Rate</th>
-                        <th class="py-2 px-3 text-right">Amount</th>
+                    <tr class="bg-slate-100 border-y border-slate-900 text-[11px] font-bold uppercase text-slate-800">
+                        <th class="py-2.5 px-3 text-center">SR NO</th>
+                        <th class="py-2.5 px-3">MACHINE NAME & SPECIFICATIONS</th>
+                        <th class="py-2.5 px-3 text-center">HSN</th>
+                        <th class="py-2.5 px-3 text-center">QTY</th>
+                        <th class="py-2.5 px-3 text-center">UNIT</th>
+                        <th class="py-2.5 px-3 text-right">PRICE (₹)</th>
+                        <th class="py-2.5 px-3 text-right">AMOUNT (₹)</th>
                     </tr>
                 </thead>
                 <tbody>${rowsHTML}</tbody>
             </table>
 
-            <div class="grid grid-cols-12 gap-6 pt-3 border-t-2 border-slate-800">
-                <div class="col-span-7 space-y-1 text-[11px]">
-                    <p class="font-bold text-slate-800 uppercase">Company Bank Details (For RTGS / NEFT):</p>
-                    <p>Account Name: <strong>ARF FOOD MACHINERY</strong></p>
-                    <p>Account No / IFSC: <strong>As per official bank details</strong></p>
+            <div class="grid grid-cols-12 gap-4 pt-2 border-t border-slate-900 items-start">
+                <div class="col-span-7 space-y-2">
+                    <div class="border border-slate-300 rounded p-2 text-[10px] bg-slate-50">
+                        <p class="font-bold text-slate-800">GST Breakdown:</p>
+                        <p>Taxable: ${formatINR(taxableAmt)} | CGST (${d.gstRate/2}%): ${formatINR(cgstAmt)} | SGST (${d.gstRate/2}%): ${formatINR(sgstAmt)}</p>
+                    </div>
+                    <div class="text-[11px]">
+                        <p class="font-bold text-slate-800 uppercase">CURRENT ACCOUNT BANK DETAILS:</p>
+                        <p>BANK NAME: <strong>YES BANK LTD</strong> | A/C NO: <strong>128861900001527</strong></p>
+                        <p>HOLDER: <strong>ARF FOOD PROCESSING & PACKAGING INDUSTRIES</strong></p>
+                        <p>IFSC: <strong>YESB0001288</strong></p>
+                    </div>
                 </div>
-                <div class="col-span-5 space-y-1.5 text-right">
-                    <div class="flex justify-between"><span>Sub-Total (Machinery):</span><span class="font-semibold">${formatINR(t.subTotal)}</span></div>
-                    <div class="flex justify-between"><span>Packing & Forwarding:</span><span class="font-semibold">${formatINR(d.freight)}</span></div>
-                    <div class="flex justify-between"><span>GST (${d.gstRate}%):</span><span class="font-semibold">${formatINR(t.gstAmt)}</span></div>
-                    <div class="flex justify-between text-sm font-extrabold border-t border-slate-300 pt-2 text-slate-900">
-                        <span>Grand Total:</span><span>${formatINR(t.grandTotal)}</span>
+                <div class="col-span-5 space-y-1.5 text-right bg-slate-50 p-3 rounded border border-slate-200">
+                    <div class="flex justify-between"><span>Machine Value:</span><span class="font-semibold">${formatINR(t.subTotal)}</span></div>
+                    <div class="flex justify-between"><span>Freight:</span><span class="font-semibold">${formatINR(d.freight)}</span></div>
+                    <div class="flex justify-between"><span>CGST (${d.gstRate/2}%):</span><span class="font-semibold">${formatINR(cgstAmt)}</span></div>
+                    <div class="flex justify-between"><span>SGST (${d.gstRate/2}%):</span><span class="font-semibold">${formatINR(sgstAmt)}</span></div>
+                    <div class="flex justify-between text-sm font-extrabold border-t border-slate-400 pt-2 text-slate-900">
+                        <span>GRAND TOTAL (₹):</span><span>${formatINR(t.grandTotal)}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-between items-end pt-10 mt-6">
-                <p class="text-[11px] text-slate-400">Customer Acceptance Sign & Stamp</p>
+            <div class="flex justify-between items-end pt-6 mt-4 border-t border-slate-300">
+                <div class="text-[10px] text-slate-600">
+                    <p>ZED BRONZE REG: 16042026 865993</p>
+                    <p>Contact: +91 9871456863 | +91 9220796863</p>
+                    <p>Email: sales.arfindustries@gmail.com | Noida, UP - 201301</p>
+                </div>
                 <div class="text-right">
-                    <p class="font-bold text-slate-800">For ARF FOOD MACHINERY</p>
-                    <p class="text-[11px] text-slate-400 mt-6">Authorized Signatory</p>
+                    <p class="font-bold text-slate-900">For ARF FOOD PROCESSING & PACKAGING INDUSTRIES</p>
+                    <p class="text-[10px] text-slate-500 mt-6">Authorised Signatory</p>
                 </div>
             </div>
         </div>
     `;
 
     const m = document.getElementById('printModal');
-    m.classList.remove('hidden');
-    m.classList.add('flex');
+    m.classList.remove('hidden'); m.classList.add('flex');
 }
 
 function openLeadModal() {
@@ -480,9 +481,7 @@ document.getElementById('leadForm').addEventListener('submit', function(e) {
         budget: Number(document.getElementById('l_budget').value || 0),
         status: document.getElementById('l_status').value
     });
-    saveAll();
-    closeModal('leadModal');
-    renderLeads();
+    saveAll(); closeModal('leadModal'); renderLeads();
 });
 
 document.getElementById('machineForm').addEventListener('submit', function(e) {
@@ -497,9 +496,7 @@ document.getElementById('machineForm').addEventListener('submit', function(e) {
         price: Number(document.getElementById('m_price').value || 0),
         stock: Number(document.getElementById('m_stock').value || 0)
     });
-    saveAll();
-    closeModal('machineModal');
-    renderInventory();
+    saveAll(); closeModal('machineModal'); renderInventory();
 });
 
 function deleteLead(id) { leads = leads.filter(x => x.id !== id); saveAll(); renderLeads(); }

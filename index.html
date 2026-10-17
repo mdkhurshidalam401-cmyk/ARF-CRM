@@ -3,664 +3,1028 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARF-CRM | Enterprise Workspace</title>
-    <!-- Tailwind CSS -->
+    <title>ARF Food Machinery | CRM, Inventory & GST Billing ERP</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                }
-            }
-        }
-    </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Print Styles for A4 Quotation / PI / Bill */
+        @media print {
+            body * { visibility: hidden; }
+            #printModal, #printArea, #printArea * { visibility: visible; }
+            #printModal { position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important; margin: 0 !important; }
+            #printArea { box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- LEFT SIDEBAR (Enterprise Look) -->
-    <aside class="w-64 bg-[#0F172A] text-slate-300 flex-col justify-between hidden md:flex shrink-0 select-none border-r border-slate-800">
+    <!-- LEFT SIDEBAR -->
+    <aside class="w-64 bg-[#0F172A] text-slate-300 flex flex-col justify-between hidden md:flex shrink-0 select-none border-r border-slate-800">
         <div>
-            <!-- Brand Logo -->
-            <div class="h-16 flex items-center px-6 border-b border-slate-800/80 gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">
-                    A
+            <!-- Brand Header -->
+            <div class="h-16 flex items-center px-5 border-b border-slate-800 gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-orange-500/25">
+                    <i class="fa-solid fa-gears"></i>
                 </div>
                 <div>
-                    <span class="font-bold text-white text-base tracking-tight block leading-none">ARF-CRM</span>
-                    <span class="text-[11px] text-indigo-400 font-medium">Enterprise Edition</span>
+                    <span class="font-bold text-white text-base tracking-tight block leading-none">ARF MACHINES</span>
+                    <span class="text-[11px] text-orange-400 font-medium">Food Processing ERP</span>
                 </div>
             </div>
 
-            <!-- Navigation Links -->
-            <div class="p-4 space-y-1">
-                <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Main Menu</p>
-                <a href="#" onclick="switchView('table')" id="side-table" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-600/15 text-indigo-400 font-medium text-sm transition">
-                    <i class="fa-solid fa-layer-group w-5 text-center"></i> Leads Directory
-                </a>
-                <a href="#" onclick="switchView('kanban')" id="side-kanban" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 font-medium text-sm transition">
-                    <i class="fa-solid fa-table-columns w-5 text-center"></i> Pipeline Board
-                </a>
-                <a href="#" onclick="exportToCSV()" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 font-medium text-sm transition">
-                    <i class="fa-solid fa-file-arrow-down w-5 text-center"></i> Export Reports
-                </a>
+            <!-- Main Navigation -->
+            <div class="p-4 space-y-1.5">
+                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">ERP Modules</p>
+                
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-orange-500/15 text-orange-400 font-semibold text-xs transition">
+                    <i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i> Dashboard & Leads
+                </button>
+                
+                <button onclick="switchTab('inventory')" id="nav-inventory" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition">
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-boxes-stacked w-5 text-center text-sm"></i> Machine Inventory</span>
+                    <span id="badge-stock" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">0</span>
+                </button>
+
+                <button onclick="switchTab('billing')" id="nav-billing" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition">
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-file-invoice-dollar w-5 text-center text-sm"></i> Quotations, PI & Bills</span>
+                    <span id="badge-docs" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">0</span>
+                </button>
             </div>
 
-            <!-- Quick Pipeline Filter -->
-            <div class="p-4 mt-2 border-t border-slate-800/80">
-                <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Quick Status Filter</p>
-                <div class="space-y-1 text-sm">
-                    <button onclick="quickFilter('All')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
-                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> All Deals</span>
-                        <span id="side-count-all" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
-                    </button>
-                    <button onclick="quickFilter('New Lead')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
-                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> New Leads</span>
-                        <span id="side-count-new" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
-                    </button>
-                    <button onclick="quickFilter('Follow-up')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
-                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> In Follow-up</span>
-                        <span id="side-count-followup" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
-                    </button>
-                    <button onclick="quickFilter('Converted')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
-                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Won / Closed</span>
-                        <span id="side-count-won" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
-                    </button>
-                </div>
+            <!-- Quick Create Document -->
+            <div class="p-4 border-t border-slate-800/80 space-y-2">
+                <p class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Quick Generate</p>
+                <button onclick="openDocModal('Quotation')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition border border-slate-700/60">
+                    <i class="fa-solid fa-file-lines text-blue-400"></i> + New Quotation
+                </button>
+                <button onclick="openDocModal('Proforma Invoice')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition border border-slate-700/60">
+                    <i class="fa-solid fa-file-contract text-amber-400"></i> + New Proforma (PI)
+                </button>
+                <button onclick="openDocModal('Tax Invoice')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition border border-slate-700/60">
+                    <i class="fa-solid fa-receipt text-emerald-400"></i> + New GST Bill
+                </button>
             </div>
         </div>
 
-        <!-- Admin Profile Footer -->
-        <div class="p-4 border-t border-slate-800/80 bg-slate-900/50 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-semibold text-sm">
-                    KA
-                </div>
-                <div>
-                    <p class="text-xs font-semibold text-white leading-tight">Workspace Admin</p>
-                    <p class="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
-                    </p>
-                </div>
+        <!-- Company Info Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-white">ARF Food Machinery</p>
+                <p class="text-[10px] text-slate-400">GSTIN: 09AAACA1234A1Z5</p>
             </div>
-            <button onclick="resetDemoData()" title="Reset Sample Data" class="text-slate-500 hover:text-slate-300 text-xs p-1.5">
-                <i class="fa-solid fa-rotate-right"></i>
+            <button onclick="resetAllData()" title="Reset Sample Factory Data" class="text-slate-500 hover:text-orange-400 p-1.5 text-xs">
+                <i class="fa-solid fa-rotate"></i>
             </button>
         </div>
     </aside>
 
-    <!-- RIGHT MAIN WORKSPACE -->
+    <!-- MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden">
 
-        <!-- Top Header -->
-        <header class="h-16 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-4">
-                <h1 class="text-lg font-bold text-slate-800 tracking-tight">Sales & Client Pipeline</h1>
-                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    <i class="fa-solid fa-bolt text-[10px]"></i> Live Sync Active
+        <!-- Top Navbar -->
+        <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <h1 id="pageTitle" class="text-lg font-bold text-slate-800">Machinery Sales & Leads CRM</h1>
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                    <i class="fa-solid fa-industry text-[10px]"></i> Manufacturing Unit
                 </span>
             </div>
 
-            <div class="flex items-center gap-3">
-                <!-- View Switcher Buttons -->
-                <div class="bg-slate-100 p-1 rounded-lg border border-slate-200 hidden sm:flex items-center text-xs font-medium">
-                    <button onclick="switchView('table')" id="btn-view-table" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-list"></i> List
-                    </button>
-                    <button onclick="switchView('kanban')" id="btn-view-kanban" class="px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-grip-vertical"></i> Board
-                    </button>
+            <!-- Mobile Nav + Action Buttons -->
+            <div class="flex items-center gap-2.5">
+                <div class="flex md:hidden bg-slate-100 p-1 rounded-lg text-xs">
+                    <button onclick="switchTab('dashboard')" class="px-2 py-1 rounded bg-white shadow-2xs">CRM</button>
+                    <button onclick="switchTab('inventory')" class="px-2 py-1 rounded">Stock</button>
+                    <button onclick="switchTab('billing')" class="px-2 py-1 rounded">Billing</button>
                 </div>
 
-                <button onclick="exportToCSV()" class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-2 shadow-2xs">
-                    <i class="fa-solid fa-download text-slate-400"></i> <span class="hidden sm:inline">Export CSV</span>
+                <button onclick="openLeadModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-plus text-orange-500"></i> Add Inquiry
                 </button>
-
-                <button onclick="openModal()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition flex items-center gap-2 shadow-sm shadow-indigo-500/20 cursor-pointer">
-                    <i class="fa-solid fa-plus"></i> Add New Deal
+                <button onclick="openDocModal('Quotation')" class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm shadow-orange-500/20">
+                    <i class="fa-solid fa-file-invoice"></i> Create Quote / PI / Bill
                 </button>
             </div>
         </header>
 
-        <!-- Scrollable Content Area -->
+        <!-- Dynamic Workspace -->
         <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
-            <!-- KPI Analytics Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <!-- Card 1 -->
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pipeline Value</span>
-                        <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                            <i class="fa-solid fa-indian-rupee-sign text-sm"></i>
-                        </span>
+            <!-- TOP KPI STATS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Inquiries</span>
+                        <span class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-headset"></i></span>
                     </div>
-                    <h3 id="stat-pipeline" class="text-2xl font-bold text-slate-900 mt-3">₹0</h3>
-                    <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                        <span class="text-emerald-600 font-semibold"><i class="fa-solid fa-arrow-trend-up"></i> Active</span> across <span id="stat-total">0</span> deals
-                    </p>
+                    <h3 id="kpi-leads" class="text-2xl font-extrabold text-slate-800 mt-2">0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Machinery buyers in pipeline</p>
                 </div>
 
-                <!-- Card 2 -->
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Closed / Won Revenue</span>
-                        <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                            <i class="fa-solid fa-sack-dollar text-sm"></i>
-                        </span>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Machines in Stock</span>
+                        <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-gears"></i></span>
                     </div>
-                    <h3 id="stat-won-value" class="text-2xl font-bold text-emerald-600 mt-3">₹0</h3>
-                    <p class="text-xs text-slate-400 mt-1">
-                        <span id="stat-converted" class="font-semibold text-slate-700">0</span> deals converted
-                    </p>
+                    <h3 id="kpi-stock" class="text-2xl font-extrabold text-slate-800 mt-2">0 Units</h3>
+                    <p id="kpi-lowstock" class="text-[11px] text-amber-600 font-semibold mt-1">Ready for dispatch</p>
                 </div>
 
-                <!-- Card 3 -->
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Follow-ups</span>
-                        <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                            <i class="fa-solid fa-clock-rotate-left text-sm"></i>
-                        </span>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quotations & PI Value</span>
+                        <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-file-signature"></i></span>
                     </div>
-                    <h3 id="stat-followup" class="text-2xl font-bold text-slate-900 mt-3">0</h3>
-                    <p class="text-xs text-amber-600 font-medium mt-1">Requires immediate attention</p>
+                    <h3 id="kpi-quotes" class="text-2xl font-extrabold text-slate-800 mt-2">₹0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Pending client approvals</p>
                 </div>
 
-                <!-- Card 4 -->
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Win Conversion Rate</span>
-                        <span class="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
-                            <i class="fa-solid fa-chart-line text-sm"></i>
-                        </span>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Billed (Tax Invoices)</span>
+                        <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-indian-rupee-sign"></i></span>
                     </div>
-                    <h3 id="stat-rate" class="text-2xl font-bold text-slate-900 mt-3">0%</h3>
-                    <p class="text-xs text-slate-400 mt-1"><span id="stat-new" class="font-semibold text-blue-600">0</span> fresh leads in queue</p>
+                    <h3 id="kpi-billed" class="text-2xl font-extrabold text-emerald-600 mt-2">₹0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Incl. 18% GST collections</p>
                 </div>
             </div>
 
-            <!-- Search & Filter Controls -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row gap-3 justify-between items-center">
-                <div class="relative w-full md:w-96">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                    <input type="text" id="searchInput" oninput="renderApp()" placeholder="Search client, company, phone or notes..." 
-                        class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                    <select id="statusFilter" onchange="renderApp()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 focus:outline-none focus:border-indigo-500">
-                        <option value="All">Status: All Deals</option>
-                        <option value="New Lead">New Lead</option>
-                        <option value="Follow-up">Follow-up</option>
-                        <option value="Converted">Converted (Won)</option>
-                        <option value="Lost">Closed Lost</option>
-                    </select>
-
-                    <select id="priorityFilter" onchange="renderApp()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 focus:outline-none focus:border-indigo-500">
-                        <option value="All">Priority: All</option>
-                        <option value="High">🔥 High Priority</option>
-                        <option value="Medium">⚡ Medium</option>
-                        <option value="Low">🌱 Low</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- VIEW 1: MODERN ENTERPRISE TABLE -->
-            <div id="tableView" class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                                <th class="py-3.5 px-5">Client & Company</th>
-                                <th class="py-3.5 px-4">Quick Contact</th>
-                                <th class="py-3.5 px-4">Deal Value</th>
-                                <th class="py-3.5 px-4">Stage / Status</th>
-                                <th class="py-3.5 px-4">Priority</th>
-                                <th class="py-3.5 px-4">Next Follow-up / Notes</th>
-                                <th class="py-3.5 px-5 text-right">Manage</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leadList" class="divide-y divide-slate-100 text-xs">
-                            <!-- Injected via JS -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Empty State -->
-                <div id="emptyState" class="hidden text-center py-14 px-4">
-                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+            <!-- ================= TAB 1: LEADS & INQUIRIES CRM ================= -->
+            <section id="tab-dashboard" class="space-y-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row justify-between gap-3 items-center">
+                    <div class="relative w-full sm:w-80">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                        <input type="text" id="leadSearch" oninput="renderLeads()" placeholder="Search buyer, city, or machine required..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-orange-500">
                     </div>
-                    <p class="text-slate-700 font-semibold text-sm">No matching deals found</p>
-                    <p class="text-slate-400 text-xs mt-1">Try clearing filters or click "+ Add New Deal" to create one.</p>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <select id="leadStatusFilter" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600">
+                            <option value="All">All Stages</option>
+                            <option value="New Inquiry">New Inquiry</option>
+                            <option value="Quotation Sent">Quotation Sent</option>
+                            <option value="PI Issued">PI Issued (Advance Pending)</option>
+                            <option value="Order Confirmed">Order Confirmed (Won)</option>
+                        </select>
+                        <button onclick="openLeadModal()" class="px-3.5 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800">+ Add Buyer Lead</button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- VIEW 2: KANBAN PIPELINE BOARD -->
-            <div id="kanbanView" class="hidden grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Columns injected via JS -->
-            </div>
+                <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase">
+                                    <th class="py-3.5 px-5">Buyer / Food Factory</th>
+                                    <th class="py-3.5 px-4">Contact</th>
+                                    <th class="py-3.5 px-4">Machine Required</th>
+                                    <th class="py-3.5 px-4">Est. Budget</th>
+                                    <th class="py-3.5 px-4">Stage</th>
+                                    <th class="py-3.5 px-5 text-right">Quick Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leadTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 2: MACHINE INVENTORY ================= -->
+            <section id="tab-inventory" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row justify-between gap-3 items-center">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Food Processing Machinery Catalog & Stock</h2>
+                        <p class="text-xs text-slate-400">Manage ready stock, machine capacities, HSN codes, and base selling prices.</p>
+                    </div>
+                    <button onclick="openMachineModal()" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add New Machine to Catalog
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase">
+                                    <th class="py-3.5 px-5">Machine Model & Name</th>
+                                    <th class="py-3.5 px-4">Category</th>
+                                    <th class="py-3.5 px-4">Capacity / Power</th>
+                                    <th class="py-3.5 px-4">HSN Code</th>
+                                    <th class="py-3.5 px-4">Unit Price (Excl. GST)</th>
+                                    <th class="py-3.5 px-4">Available Stock</th>
+                                    <th class="py-3.5 px-5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB 3: QUOTATIONS, PI & GST BILLS ================= -->
+            <section id="tab-billing" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row justify-between gap-3 items-center">
+                    <div class="flex gap-2">
+                        <button onclick="filterDocs('All')" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold">All Documents</button>
+                        <button onclick="filterDocs('Quotation')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold">Quotations</button>
+                        <button onclick="filterDocs('Proforma Invoice')" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold">Proforma Invoices (PI)</button>
+                        <button onclick="filterDocs('Tax Invoice')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold">Final GST Bills</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openDocModal('Quotation')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold">+ New Quotation</button>
+                        <button onclick="openDocModal('Proforma Invoice')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold">+ New PI</button>
+                        <button onclick="openDocModal('Tax Invoice')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold">+ New GST Bill</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase">
+                                    <th class="py-3.5 px-5">Doc No. & Date</th>
+                                    <th class="py-3.5 px-4">Document Type</th>
+                                    <th class="py-3.5 px-4">Client / Party Name</th>
+                                    <th class="py-3.5 px-4">Machines Included</th>
+                                    <th class="py-3.5 px-4">Grand Total (Incl. GST)</th>
+                                    <th class="py-3.5 px-5 text-right">View / Convert / Print</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
         </main>
     </div>
 
-    <!-- ADD / EDIT MODAL -->
+    <!-- ================= MODAL 1: ADD/EDIT BUYER INQUIRY ================= -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-briefcase"></i>
-                    </span>
-                    <h3 id="modalTitle" class="text-sm font-bold tracking-wide">Add New Deal</h3>
-                </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <h3 class="text-sm font-bold">Add Machinery Buyer Inquiry</h3>
+                <button onclick="closeModal('leadModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
-
-            <form id="leadForm" class="p-6 space-y-4 text-xs">
-                <input type="hidden" id="editId">
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">Client Full Name *</label>
-                        <input type="text" id="name" required placeholder="e.g. Vikramaditya Singh" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">Company / Organization *</label>
-                        <input type="text" id="company" required placeholder="e.g. TechNova Solutions" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">WhatsApp Phone *</label>
-                        <input type="tel" id="phone" required placeholder="e.g. 9876543210" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">Email Address</label>
-                        <input type="email" id="email" placeholder="vikram@technova.in" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">Deal Value (₹) *</label>
-                        <input type="number" id="value" required placeholder="45000" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">Pipeline Stage</label>
-                        <select id="status" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:border-indigo-500 focus:outline-none">
-                            <option value="New Lead">New Lead</option>
-                            <option value="Follow-up">Follow-up</option>
-                            <option value="Converted">Converted</option>
-                            <option value="Lost">Lost</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1.5">Priority</label>
-                        <select id="priority" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:border-indigo-500 focus:outline-none">
-                            <option value="High">🔥 High</option>
-                            <option value="Medium" selected>⚡ Medium</option>
-                            <option value="Low">🌱 Low</option>
-                        </select>
-                    </div>
-                </div>
-
+            <form id="leadForm" class="p-6 space-y-3.5 text-xs">
                 <div>
-                    <label class="block font-semibold text-slate-600 mb-1.5">Follow-up Date & Deal Notes</label>
-                    <textarea id="notes" rows="2" placeholder="e.g. Demo scheduled on Friday at 3 PM. Interested in annual plan." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none"></textarea>
+                    <label class="font-semibold text-slate-600 block mb-1">Buyer Name *</label>
+                    <input type="text" id="l_name" required placeholder="e.g. राजेश अग्रवाल (Rajesh Foods)" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                 </div>
-
-                <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-semibold hover:bg-slate-50">Cancel</button>
-                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-500 shadow-sm shadow-indigo-500/20">Save Deal</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Company & City *</label>
+                        <input type="text" id="l_company" required placeholder="Swad Spices, Indore" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">WhatsApp Phone *</label>
+                        <input type="tel" id="l_phone" required placeholder="9876543210" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Interested Machine *</label>
+                        <input type="text" id="l_machine" required placeholder="Masala Pulverizer 5HP" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Estimated Value (₹)</label>
+                        <input type="number" id="l_budget" required placeholder="85000" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 block mb-1">Inquiry Stage</label>
+                    <select id="l_status" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+                        <option value="New Inquiry">New Inquiry</option>
+                        <option value="Quotation Sent">Quotation Sent</option>
+                        <option value="PI Issued">PI Issued (Advance Pending)</option>
+                        <option value="Order Confirmed">Order Confirmed (Won)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeModal('leadModal')" class="px-4 py-2 border rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-semibold rounded-xl">Save Lead</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- APPLICATION LOGIC -->
+    <!-- ================= MODAL 2: ADD MACHINE TO INVENTORY ================= -->
+    <div id="machineModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="text-sm font-bold">Add Food Processing Machine</h3>
+                <button onclick="closeModal('machineModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="machineForm" class="p-6 space-y-3.5 text-xs">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-1">
+                        <label class="font-semibold text-slate-600 block mb-1">Model SKU *</label>
+                        <input type="text" id="m_sku" required placeholder="ARF-MP05" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="font-semibold text-slate-600 block mb-1">Machine Name *</label>
+                        <input type="text" id="m_name" required placeholder="SS Masala Pulverizer Machine" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Category</label>
+                        <select id="m_cat" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+                            <option value="Grinding & Pulverizing">Grinding & Pulverizing</option>
+                            <option value="Packaging Machinery">Packaging Machinery</option>
+                            <option value="Snack & Namkeen Line">Snack & Namkeen Line</option>
+                            <option value="Bakery & Dough">Bakery & Dough</option>
+                            <option value="Dehydration & Roasting">Dehydration & Roasting</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Capacity / Motor *</label>
+                        <input type="text" id="m_spec" required placeholder="50 Kg/hr | 5 HP SS304" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">HSN Code</label>
+                        <input type="text" id="m_hsn" value="8438" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Rate (₹) *</label>
+                        <input type="number" id="m_price" required placeholder="65000" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Stock Qty *</label>
+                        <input type="number" id="m_stock" required placeholder="5" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeModal('machineModal')" class="px-4 py-2 border rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-semibold rounded-xl">Save Machine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: CREATE QUOTATION / PI / GST BILL ================= -->
+    <div id="docModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden max-h-[92vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 id="docModalTitle" class="text-sm font-bold">Generate Quotation / PI / Tax Invoice</h3>
+                <button onclick="closeModal('docModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="docForm" class="p-6 space-y-4 text-xs overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Document Type *</label>
+                        <select id="d_type" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800">
+                            <option value="Quotation">Quotation</option>
+                            <option value="Proforma Invoice">Proforma Invoice (PI)</option>
+                            <option value="Tax Invoice">Tax Invoice (Final Bill)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Buyer / Party Name *</label>
+                        <input type="text" id="d_client" required placeholder="e.g. M/s Annapurna Agro Foods" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Buyer GSTIN (Optional)</label>
+                        <input type="text" id="d_gstin" placeholder="08ABCDE1234F1Z5" class="w-full border border-slate-200 rounded-xl px-3 py-2 uppercase">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Billing Address & State *</label>
+                        <input type="text" id="d_address" required placeholder="Plot 14, Industrial Area, Kanpur, UP" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Buyer Phone *</label>
+                        <input type="tel" id="d_phone" required placeholder="9876543210" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+
+                <!-- Machine Selection Line Items -->
+                <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/60 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-700">Select Machines from Inventory</span>
+                        <button type="button" onclick="addDocItemRow()" class="text-orange-600 font-bold hover:underline">+ Add Another Machine</button>
+                    </div>
+                    <div id="docItemsContainer" class="space-y-2"></div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Freight / Packing Charges (₹)</label>
+                        <input type="number" id="d_freight" value="0" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">GST Rate (%)</label>
+                        <select id="d_gst" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+                            <option value="18" selected>18% GST (Machinery Standard)</option>
+                            <option value="12">12% GST</option>
+                            <option value="5">5% GST</option>
+                            <option value="0">0% (Export / Exempt)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Payment / Delivery Terms</label>
+                        <input type="text" id="d_terms" value="50% Advance with PI, 50% Before Dispatch" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeModal('docModal')" class="px-4 py-2 border rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-semibold rounded-xl shadow-sm">Generate & Preview PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 4: PRINTABLE A4 QUOTATION / PI / TAX INVOICE ================= -->
+    <div id="printModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-xs hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden my-auto">
+            <!-- Top Control Bar (Hidden on Print) -->
+            <div class="no-print px-6 py-3 bg-slate-900 text-white flex justify-between items-center">
+                <span class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-print mr-1"></i> Official A4 Document Preview</span>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> Print / Save as PDF
+                    </button>
+                    <button onclick="closeModal('printModal')" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs">Close</button>
+                </div>
+            </div>
+
+            <!-- Printable Invoice Area -->
+            <div id="printArea" class="p-8 text-slate-800 text-xs space-y-6 bg-white"></div>
+        </div>
+    </div>
+
+    <!-- ================= ERP APPLICATION JAVASCRIPT ================= -->
     <script>
-        const defaultLeads = [
-            { id: 1, name: "Aarav Mehta", company: "CloudScale India Pvt Ltd", phone: "9876543210", email: "aarav@cloudscale.in", value: 125000, status: "Converted", priority: "High", notes: "Annual ERP contract signed & initial invoice paid." },
-            { id: 2, name: "Priya Nair", company: "UrbanCraft Retail", phone: "9811122233", email: "priya@urbancraft.com", value: 65000, status: "Follow-up", priority: "High", notes: "Product demo done. Call on Thursday for final pricing." },
-            { id: 3, name: "Rohan Deshmukh", company: "Apex Logistics", phone: "9922334455", email: "rohan@apexlog.in", value: 42000, status: "New Lead", priority: "Medium", notes: "Inbound inquiry from website regarding CRM automation." },
-            { id: 4, name: "Zoya Khan", company: "Studio Zenith", phone: "9765432109", email: "zoya@studiozenith.co", value: 88000, status: "Follow-up", priority: "Medium", notes: "Sent revised quotation on WhatsApp." },
-            { id: 5, name: "Siddharth Verma", company: "FinEdge Advisory", phone: "9123456780", email: "sid@finedge.in", value: 150000, status: "Converted", priority: "High", notes: "Full enterprise onboarding completed." }
+        // 1. Default Food Processing Machines Inventory
+        const defaultMachines = [
+            { id: 101, sku: "ARF-MP10", name: "Heavy Duty Double Stage Masala Pulverizer", cat: "Grinding & Pulverizing", spec: "100 Kg/hr | 10 HP Motor | SS-304", hsn: "8437", price: 115000, stock: 6 },
+            { id: 102, sku: "ARF-PP50", name: "Automatic Pneumatic Pouch Packing Machine", cat: "Packaging Machinery", spec: "40-60 Pouches/min | 10g-500g", hsn: "8422", price: 165000, stock: 4 },
+            { id: 103, sku: "ARF-PC200", name: "Commercial Potato Peeler & Slicer Line", cat: "Snack & Namkeen Line", spec: "200 Kg/hr | 2 HP | SS-304 Food Grade", hsn: "8438", price: 78000, stock: 8 },
+            { id: 104, sku: "ARF-DK50", name: "Commercial Spiral Atta & Maida Kneader", cat: "Bakery & Dough", spec: "50 Kg Batch | Heavy Duty Gear Box", hsn: "8438", price: 54000, stock: 2 },
+            { id: 105, sku: "ARF-TD24", name: "24-Tray Hot Air Food & Spice Dryer Oven", cat: "Dehydration & Roasting", spec: "24 SS Trays | Digital PID Temp Control", hsn: "8419", price: 92000, stock: 5 }
         ];
 
-        let leads = JSON.parse(localStorage.getItem('arf_crm_v2')) || defaultLeads;
-        let currentView = 'table';
+        // 2. Default Machinery Buyer Leads
+        const defaultLeads = [
+            { id: 1, name: "Rakesh Gupta", company: "Chambal Spices, Gwalior", phone: "9826011223", machine: "Heavy Duty Double Stage Masala Pulverizer", budget: 115000, status: "PI Issued" },
+            { id: 2, name: "Mohd. Tariq", company: "Royal Namkeen & Snacks, Lucknow", phone: "9839044556", machine: "Automatic Pneumatic Pouch Packing Machine", budget: 165000, status: "Quotation Sent" },
+            { id: 3, name: "Suresh Patel", company: "Kisan Agro Dehydration, Rajkot", phone: "9925077889", machine: "24-Tray Hot Air Food & Spice Dryer Oven", budget: 92000, status: "Order Confirmed" }
+        ];
 
-        function saveToStorage() {
-            localStorage.setItem('arf_crm_v2', JSON.stringify(leads));
+        // 3. Default Quotations / PI / Tax Invoices
+        const defaultDocs = [
+            {
+                id: 501,
+                docNo: "ARF/QTN/2026/01",
+                date: "2026-10-14",
+                type: "Quotation",
+                client: "M/s Royal Namkeen & Snacks",
+                gstin: "09AAACR8899B1Z2",
+                address: "Industrial Estate, Talkatora, Lucknow, UP",
+                phone: "9839044556",
+                items: [{ sku: "ARF-PP50", name: "Automatic Pneumatic Pouch Packing Machine", spec: "40-60 Pouches/min | 10g-500g", hsn: "8422", qty: 1, price: 165000 }],
+                freight: 4500,
+                gstRate: 18,
+                terms: "50% Advance along with Official PO, Balance 50% Prior to Dispatch."
+            },
+            {
+                id: 502,
+                docNo: "ARF/PI/2026/02",
+                date: "2026-10-16",
+                type: "Proforma Invoice",
+                client: "M/s Chambal Spices Pvt Ltd",
+                gstin: "23AABCC1122D1Z9",
+                address: "Maharajpura Industrial Area, Gwalior, MP",
+                phone: "9826011223",
+                items: [{ sku: "ARF-MP10", name: "Heavy Duty Double Stage Masala Pulverizer", spec: "100 Kg/hr | 10 HP Motor | SS-304", hsn: "8437", qty: 1, price: 115000 }],
+                freight: 3000,
+                gstRate: 18,
+                terms: "50% Advance against Proforma Invoice for Machine Trial & Dispatch."
+            },
+            {
+                id: 503,
+                docNo: "ARF/INV/2026/03",
+                date: "2026-10-17",
+                type: "Tax Invoice",
+                client: "M/s Kisan Agro Dehydration",
+                gstin: "24AAACK5566E1Z1",
+                address: "GIDC Metoda, Kalawad Road, Rajkot, Gujarat",
+                phone: "9925077889",
+                items: [{ sku: "ARF-TD24", name: "24-Tray Hot Air Food & Spice Dryer Oven", spec: "24 SS Trays | Digital PID Temp Control", hsn: "8419", qty: 2, price: 92000 }],
+                freight: 6000,
+                gstRate: 18,
+                terms: "100% Payment Received. Dispatched via VRL Logistics."
+            }
+        ];
+
+        let machines = JSON.parse(localStorage.getItem('arf_machines')) || defaultMachines;
+        let leads = JSON.parse(localStorage.getItem('arf_leads')) || defaultLeads;
+        let docs = JSON.parse(localStorage.getItem('arf_docs')) || defaultDocs;
+        let currentDocFilter = 'All';
+
+        function saveAll() {
+            localStorage.setItem('arf_machines', JSON.stringify(machines));
+            localStorage.setItem('arf_leads', JSON.stringify(leads));
+            localStorage.setItem('arf_docs', JSON.stringify(docs));
+            updateKPIs();
         }
 
-        function resetDemoData() {
-            if (confirm("Reset CRM to default sample deals?")) {
+        function resetAllData() {
+            if (confirm("Reset ARF Food Machinery ERP to sample factory data?")) {
+                machines = [...defaultMachines];
                 leads = [...defaultLeads];
-                saveToStorage();
-                renderApp();
+                docs = [...defaultDocs];
+                saveAll();
+                renderAll();
             }
         }
 
-        function formatINR(num) {
-            return '₹' + Number(num || 0).toLocaleString('en-IN');
+        function formatINR(n) {
+            return '₹' + Number(n || 0).toLocaleString('en-IN');
         }
 
-        function getInitials(name) {
-            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        function calcDocTotals(doc) {
+            const subTotal = doc.items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const taxable = subTotal + Number(doc.freight || 0);
+            const gstAmt = Math.round(taxable * (Number(doc.gstRate || 0) / 100));
+            const grandTotal = taxable + gstAmt;
+            return { subTotal, taxable, gstAmt, grandTotal };
         }
 
-        function getStatusBadge(status) {
-            const styles = {
-                'New Lead': 'bg-blue-50 text-blue-700 border-blue-200',
-                'Follow-up': 'bg-amber-50 text-amber-700 border-amber-200',
-                'Converted': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                'Lost': 'bg-rose-50 text-rose-700 border-rose-200'
-            };
-            const dots = {
-                'New Lead': 'bg-blue-500',
-                'Follow-up': 'bg-amber-500',
-                'Converted': 'bg-emerald-500',
-                'Lost': 'bg-rose-500'
-            };
-            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${styles[status] || styles['New Lead']}">
-                        <span class="w-1.5 h-1.5 rounded-full ${dots[status] || dots['New Lead']}"></span> ${status}
-                    </span>`;
+        function updateKPIs() {
+            document.getElementById('kpi-leads').innerText = leads.length;
+            const totalUnits = machines.reduce((s, m) => s + Number(m.stock), 0);
+            document.getElementById('kpi-stock').innerText = totalUnits + ' Units';
+            document.getElementById('badge-stock').innerText = machines.length;
+            document.getElementById('badge-docs').innerText = docs.length;
+
+            const quotePIValue = docs.filter(d => d.type !== 'Tax Invoice').reduce((s, d) => s + calcDocTotals(d).grandTotal, 0);
+            const billedValue = docs.filter(d => d.type === 'Tax Invoice').reduce((s, d) => s + calcDocTotals(d).grandTotal, 0);
+
+            document.getElementById('kpi-quotes').innerText = formatINR(quotePIValue);
+            document.getElementById('kpi-billed').innerText = formatINR(billedValue);
         }
 
-        function getPriorityBadge(priority) {
-            const map = {
-                'High': '<span class="text-rose-600 bg-rose-50 px-2 py-0.5 rounded font-semibold text-[11px]">🔥 High</span>',
-                'Medium': '<span class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded font-semibold text-[11px]">⚡ Medium</span>',
-                'Low': '<span class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-semibold text-[11px]">🌱 Low</span>'
-            };
-            return map[priority] || map['Medium'];
-        }
-
-        function updateStats() {
-            const total = leads.length;
-            const newLeads = leads.filter(l => l.status === 'New Lead').length;
-            const followups = leads.filter(l => l.status === 'Follow-up').length;
-            const converted = leads.filter(l => l.status === 'Converted').length;
-
-            const pipelineValue = leads.filter(l => l.status !== 'Lost').reduce((acc, l) => acc + Number(l.value || 0), 0);
-            const wonValue = leads.filter(l => l.status === 'Converted').reduce((acc, l) => acc + Number(l.value || 0), 0);
-            const winRate = total > 0 ? Math.round((converted / total) * 100) : 0;
-
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-new').innerText = newLeads;
-            document.getElementById('stat-followup').innerText = followups;
-            document.getElementById('stat-converted').innerText = converted;
-            document.getElementById('stat-pipeline').innerText = formatINR(pipelineValue);
-            document.getElementById('stat-won-value').innerText = formatINR(wonValue);
-            document.getElementById('stat-rate').innerText = winRate + '%';
-
-            // Sidebar counts
-            document.getElementById('side-count-all').innerText = total;
-            document.getElementById('side-count-new').innerText = newLeads;
-            document.getElementById('side-count-followup').innerText = followups;
-            document.getElementById('side-count-won').innerText = converted;
-        }
-
-        function getFilteredLeads() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value;
-            const priority = document.getElementById('priorityFilter').value;
-
-            return leads.filter(l => {
-                const matchesQ = l.name.toLowerCase().includes(q) ||
-                                 (l.company && l.company.toLowerCase().includes(q)) ||
-                                 l.phone.includes(q) ||
-                                 (l.notes && l.notes.toLowerCase().includes(q));
-                const matchesS = status === 'All' || l.status === status;
-                const matchesP = priority === 'All' || l.priority === priority;
-                return matchesQ && matchesS && matchesP;
+        // Tab Switching
+        function switchTab(tab) {
+            ['dashboard', 'inventory', 'billing'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                const nav = document.getElementById('nav-' + t);
+                if (nav) nav.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition";
             });
-        }
 
-        function renderApp() {
-            updateStats();
-            const filtered = getFilteredLeads();
-            const tbody = document.getElementById('leadList');
-            const emptyState = document.getElementById('emptyState');
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            const activeNav = document.getElementById('nav-' + tab);
+            if (activeNav) activeNav.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-orange-500/15 text-orange-400 font-semibold text-xs transition";
 
-            // Render Table
-            tbody.innerHTML = '';
-            if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                filtered.forEach(lead => {
-                    const cleanPhone = lead.phone.replace(/\D/g, '');
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50/90 transition group">
-                            <td class="py-3.5 px-5">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center shrink-0">
-                                        ${getInitials(lead.name)}
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-slate-800 text-xs">${lead.name}</p>
-                                        <p class="text-[11px] text-slate-400 font-medium">${lead.company || 'Private Client'}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3.5 px-4">
-                                <div class="flex items-center gap-1.5">
-                                    <a href="https://wa.me/91${cleanPhone}" target="_blank" title="WhatsApp Client" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white flex items-center justify-center transition">
-                                        <i class="fa-brands fa-whatsapp text-sm"></i>
-                                    </a>
-                                    <a href="tel:${cleanPhone}" title="Call Client" class="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white flex items-center justify-center transition">
-                                        <i class="fa-solid fa-phone text-[11px]"></i>
-                                    </a>
-                                    <span class="text-slate-600 font-medium ml-1">${lead.phone}</span>
-                                </div>
-                            </td>
-                            <td class="py-3.5 px-4 font-bold text-slate-800">${formatINR(lead.value)}</td>
-                            <td class="py-3.5 px-4">${getStatusBadge(lead.status)}</td>
-                            <td class="py-3.5 px-4">${getPriorityBadge(lead.priority)}</td>
-                            <td class="py-3.5 px-4 max-w-xs">
-                                <p class="text-slate-600 truncate" title="${lead.notes || ''}">${lead.notes || '<span class="text-slate-300">No notes added</span>'}</p>
-                            </td>
-                            <td class="py-3.5 px-5 text-right">
-                                <div class="inline-flex items-center gap-1">
-                                    <button onclick="editLead(${lead.id})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition" title="Edit Deal">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
-                                    <button onclick="deleteLead(${lead.id})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Delete Deal">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-
-            // Render Kanban Board
-            renderKanban(filtered);
-        }
-
-        function renderKanban(filtered) {
-            const stages = ['New Lead', 'Follow-up', 'Converted', 'Lost'];
-            const colors = {
-                'New Lead': 'border-t-blue-500',
-                'Follow-up': 'border-t-amber-500',
-                'Converted': 'border-t-emerald-500',
-                'Lost': 'border-t-rose-500'
+            const titles = {
+                dashboard: "Machinery Sales & Leads CRM",
+                inventory: "Food Processing Machinery Inventory",
+                billing: "Quotations, Proforma Invoices (PI) & GST Bills"
             };
-            const container = document.getElementById('kanbanView');
-            container.innerHTML = '';
+            document.getElementById('pageTitle').innerText = titles[tab];
+        }
 
-            stages.forEach(stage => {
-                const stageLeads = filtered.filter(l => l.status === stage);
-                const stageTotal = stageLeads.reduce((sum, l) => sum + Number(l.value || 0), 0);
+        // Render Leads
+        function renderLeads() {
+            const q = document.getElementById('leadSearch').value.toLowerCase();
+            const status = document.getElementById('leadStatusFilter').value;
+            const tbody = document.getElementById('leadTableBody');
+            tbody.innerHTML = '';
 
-                let cardsHTML = stageLeads.map(lead => `
-                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-md transition space-y-2.5">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-bold text-slate-800 text-xs">${lead.name}</h4>
-                                <p class="text-[11px] text-slate-400">${lead.company}</p>
-                            </div>
-                            ${getPriorityBadge(lead.priority)}
-                        </div>
-                        <p class="text-[11px] text-slate-500 line-clamp-2">${lead.notes || 'No notes'}</p>
-                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-                            <span class="font-bold text-xs text-indigo-600">${formatINR(lead.value)}</span>
+            const badgeColors = {
+                'New Inquiry': 'bg-blue-50 text-blue-700 border-blue-200',
+                'Quotation Sent': 'bg-purple-50 text-purple-700 border-purple-200',
+                'PI Issued': 'bg-amber-50 text-amber-700 border-amber-200',
+                'Order Confirmed': 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            };
+
+            leads.filter(l => {
+                const mQ = l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) || l.machine.toLowerCase().includes(q);
+                const mS = status === 'All' || l.status === status;
+                return mQ && mS;
+            }).forEach(l => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-5">
+                            <p class="font-bold text-slate-800">${l.name}</p>
+                            <p class="text-[11px] text-slate-400">${l.company}</p>
+                        </td>
+                        <td class="py-3.5 px-4">
                             <div class="flex items-center gap-1.5">
-                                <a href="https://wa.me/91${lead.phone.replace(/\D/g, '')}" target="_blank" class="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><i class="fa-brands fa-whatsapp"></i></a>
-                                <button onclick="editLead(${lead.id})" class="text-slate-400 hover:text-indigo-600 p-1 rounded"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                <a href="https://wa.me/91${l.phone.replace(/\D/g,'')}" target="_blank" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white flex items-center justify-center"><i class="fa-brands fa-whatsapp"></i></a>
+                                <span>${l.phone}</span>
                             </div>
-                        </div>
-                    </div>
-                `).join('');
-
-                container.innerHTML += `
-                    <div class="bg-slate-100/80 rounded-2xl p-3.5 border border-slate-200/70 border-t-4 ${colors[stage]} flex flex-col gap-3">
-                        <div class="flex items-center justify-between px-1">
-                            <div>
-                                <h3 class="font-bold text-xs text-slate-800">${stage} <span class="ml-1 text-[11px] bg-white px-2 py-0.5 rounded-full border border-slate-200 text-slate-500">${stageLeads.length}</span></h3>
-                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">${formatINR(stageTotal)}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2.5 min-h-[120px]">
-                            ${cardsHTML || '<p class="text-center text-[11px] text-slate-400 py-8">No deals in this stage</p>'}
-                        </div>
-                    </div>
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-700">${l.machine}</td>
+                        <td class="py-3.5 px-4 font-bold">${formatINR(l.budget)}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColors[l.status] || badgeColors['New Inquiry']}">${l.status}</span>
+                        </td>
+                        <td class="py-3.5 px-5 text-right space-x-1">
+                            <button onclick="quickQuoteFromLead(${l.id})" class="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg font-semibold text-[11px]">
+                                <i class="fa-solid fa-file-invoice mr-1"></i> Make Quote/PI
+                            </button>
+                            <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
                 `;
             });
         }
 
-        function switchView(view) {
-            currentView = view;
-            const tableEl = document.getElementById('tableView');
-            const kanbanEl = document.getElementById('kanbanView');
-            const btnTable = document.getElementById('btn-view-table');
-            const btnKanban = document.getElementById('btn-view-kanban');
+        // Render Machine Inventory
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = '';
+            machines.forEach(m => {
+                const stockBadge = m.stock <= 2
+                    ? `<span class="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-full font-bold text-[11px]">Low: ${m.stock} Units</span>`
+                    : `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">${m.stock} Units Ready</span>`;
 
-            if (view === 'kanban') {
-                tableEl.classList.add('hidden');
-                kanbanEl.classList.remove('hidden');
-                kanbanEl.classList.add('grid');
-                btnKanban.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5";
-                btnTable.className = "px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5";
-            } else {
-                tableEl.classList.remove('hidden');
-                kanbanEl.classList.add('hidden');
-                kanbanEl.classList.remove('grid');
-                btnTable.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5";
-                btnKanban.className = "px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5";
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-5">
+                            <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${m.sku}</span>
+                            <p class="font-bold text-slate-800 mt-1">${m.name}</p>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-500 font-medium">${m.cat}</td>
+                        <td class="py-3.5 px-4 text-slate-600">${m.spec}</td>
+                        <td class="py-3.5 px-4 font-mono text-slate-500">${m.hsn}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-800">${formatINR(m.price)}</td>
+                        <td class="py-3.5 px-4">${stockBadge}</td>
+                        <td class="py-3.5 px-5 text-right space-x-1">
+                            <button onclick="adjustStock(${m.id}, 1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-bold" title="Add Stock">+</button>
+                            <button onclick="adjustStock(${m.id}, -1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded font-bold" title="Reduce Stock">-</button>
+                            <button onclick="deleteMachine(${m.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function adjustStock(id, delta) {
+            const m = machines.find(x => x.id === id);
+            if (m) {
+                m.stock = Math.max(0, Number(m.stock) + delta);
+                saveAll();
+                renderInventory();
             }
         }
 
-        function quickFilter(status) {
-            document.getElementById('statusFilter').value = status;
-            renderApp();
+        // Render Quotations, PI & Bills
+        function filterDocs(type) {
+            currentDocFilter = type;
+            renderDocs();
         }
 
-        function openModal(isEdit = false) {
-            const modal = document.getElementById('leadModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            if (!isEdit) {
-                document.getElementById('modalTitle').innerText = 'Add New Deal';
-                document.getElementById('leadForm').reset();
-                document.getElementById('editId').value = '';
-            }
-        }
+        function renderDocs() {
+            const tbody = document.getElementById('docTableBody');
+            tbody.innerHTML = '';
 
-        function closeModal() {
-            const modal = document.getElementById('leadModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        document.getElementById('leadForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const editId = document.getElementById('editId').value;
-            const dealData = {
-                id: editId ? Number(editId) : Date.now(),
-                name: document.getElementById('name').value.trim(),
-                company: document.getElementById('company').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                value: Number(document.getElementById('value').value || 0),
-                status: document.getElementById('status').value,
-                priority: document.getElementById('priority').value,
-                notes: document.getElementById('notes').value.trim()
+            const typeStyles = {
+                'Quotation': 'bg-blue-50 text-blue-700 border-blue-200',
+                'Proforma Invoice': 'bg-amber-50 text-amber-700 border-amber-200',
+                'Tax Invoice': 'bg-emerald-50 text-emerald-700 border-emerald-200'
             };
 
-            if (editId) {
-                const idx = leads.findIndex(l => l.id === Number(editId));
-                if (idx > -1) leads[idx] = dealData;
-            } else {
-                leads.unshift(dealData);
+            docs.filter(d => currentDocFilter === 'All' || d.type === currentDocFilter).forEach(d => {
+                const totals = calcDocTotals(d);
+                const itemSummary = d.items.map(i => `${i.name} (x${i.qty})`).join(', ');
+
+                let convertBtn = '';
+                if (d.type === 'Quotation') {
+                    convertBtn = `<button onclick="convertDoc(${d.id}, 'Proforma Invoice')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-semibold text-[11px]" title="Convert Quote to PI">➔ Make PI</button>`;
+                } else if (d.type === 'Proforma Invoice') {
+                    convertBtn = `<button onclick="convertDoc(${d.id}, 'Tax Invoice')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold text-[11px]" title="Convert PI to Final GST Bill">➔ Make Final Bill</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-5">
+                            <p class="font-bold text-slate-800">${d.docNo}</p>
+                            <p class="text-[11px] text-slate-400">${d.date}</p>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${typeStyles[d.type]}">${d.type}</span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <p class="font-bold text-slate-800">${d.client}</p>
+                            <p class="text-[11px] text-slate-400">${d.address}</p>
+                        </td>
+                        <td class="py-3.5 px-4 max-w-xs truncate font-medium text-slate-600" title="${itemSummary}">${itemSummary}</td>
+                        <td class="py-3.5 px-4 font-extrabold text-slate-900">${formatINR(totals.grandTotal)}</td>
+                        <td class="py-3.5 px-5 text-right space-x-1">
+                            ${convertBtn}
+                            <button onclick="previewDoc(${d.id})" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-700 text-white rounded-lg font-semibold text-[11px]">
+                                <i class="fa-solid fa-print mr-1"></i> Print / PDF
+                            </button>
+                            <button onclick="deleteDoc(${d.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Convert Quotation -> PI -> Final Tax Invoice (Auto deducts stock on Tax Invoice)
+        function convertDoc(id, targetType) {
+            const orig = docs.find(d => d.id === id);
+            if (!orig) return;
+
+            const prefix = targetType === 'Proforma Invoice' ? 'ARF/PI/2026/' : 'ARF/INV/2026/';
+            const newDoc = JSON.parse(JSON.stringify(orig));
+            newDoc.id = Date.now();
+            newDoc.type = targetType;
+            newDoc.date = new Date().toISOString().slice(0, 10);
+            newDoc.docNo = prefix + String(docs.length + 1).padStart(2, '0');
+
+            if (targetType === 'Tax Invoice') {
+                newDoc.items.forEach(item => {
+                    const invMachine = machines.find(m => m.sku === item.sku);
+                    if (invMachine && invMachine.stock >= item.qty) {
+                        invMachine.stock -= item.qty;
+                    }
+                });
             }
 
-            saveToStorage();
-            closeModal();
-            renderApp();
+            docs.unshift(newDoc);
+            saveAll();
+            renderAll();
+            previewDoc(newDoc.id);
+        }
+
+        // Document Modal & Dynamic Machine Rows
+        function openDocModal(defaultType = 'Quotation', prefillLead = null) {
+            document.getElementById('docForm').reset();
+            document.getElementById('d_type').value = defaultType;
+            document.getElementById('docItemsContainer').innerHTML = '';
+
+            if (prefillLead) {
+                document.getElementById('d_client').value = prefillLead.company || prefillLead.name;
+                document.getElementById('d_phone').value = prefillLead.phone;
+                document.getElementById('d_address').value = prefillLead.company;
+            }
+
+            addDocItemRow();
+            const m = document.getElementById('docModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function addDocItemRow() {
+            const container = document.getElementById('docItemsContainer');
+            const options = machines.map(m => `<option value="${m.id}">${m.sku} - ${m.name} (${formatINR(m.price)})</option>`).join('');
+            const row = document.createElement('div');
+            row.className = "grid grid-cols-12 gap-2 items-center doc-item-row";
+            row.innerHTML = `
+                <div class="col-span-7">
+                    <select onchange="syncRowPrice(this)" class="w-full border border-slate-200 rounded-lg px-2.5 py-2 bg-white machine-select">
+                        ${options}
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <input type="number" value="1" min="1" placeholder="Qty" class="w-full border border-slate-200 rounded-lg px-2.5 py-2 item-qty">
+                </div>
+                <div class="col-span-2">
+                    <input type="number" value="${machines[0]?.price || 0}" class="w-full border border-slate-200 rounded-lg px-2.5 py-2 item-price">
+                </div>
+                <div class="col-span-1 text-right">
+                    <button type="button" onclick="this.closest('.doc-item-row').remove()" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        function syncRowPrice(selectEl) {
+            const m = machines.find(x => x.id === Number(selectEl.value));
+            if (m) {
+                selectEl.closest('.doc-item-row').querySelector('.item-price').value = m.price;
+            }
+        }
+
+        document.getElementById('docForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const type = document.getElementById('d_type').value;
+            const prefixMap = { 'Quotation': 'ARF/QTN/2026/', 'Proforma Invoice': 'ARF/PI/2026/', 'Tax Invoice': 'ARF/INV/2026/' };
+
+            const rows = document.querySelectorAll('.doc-item-row');
+            const items = [];
+            rows.forEach(r => {
+                const mId = Number(r.querySelector('.machine-select').value);
+                const m = machines.find(x => x.id === mId);
+                const qty = Number(r.querySelector('.item-qty').value || 1);
+                const price = Number(r.querySelector('.item-price').value || 0);
+                if (m) {
+                    items.push({ sku: m.sku, name: m.name, spec: m.spec, hsn: m.hsn, qty, price });
+                    if (type === 'Tax Invoice' && m.stock >= qty) {
+                        m.stock -= qty;
+                    }
+                }
+            });
+
+            const newDoc = {
+                id: Date.now(),
+                docNo: prefixMap[type] + String(docs.length + 1).padStart(2, '0'),
+                date: new Date().toISOString().slice(0, 10),
+                type,
+                client: document.getElementById('d_client').value.trim(),
+                gstin: document.getElementById('d_gstin').value.trim() || 'Unregistered / N/A',
+                address: document.getElementById('d_address').value.trim(),
+                phone: document.getElementById('d_phone').value.trim(),
+                items,
+                freight: Number(document.getElementById('d_freight').value || 0),
+                gstRate: Number(document.getElementById('d_gst').value || 18),
+                terms: document.getElementById('d_terms').value.trim()
+            };
+
+            docs.unshift(newDoc);
+            saveAll();
+            closeModal('docModal');
+            switchTab('billing');
+            renderAll();
+            previewDoc(newDoc.id);
         });
 
-        function editLead(id) {
-            const lead = leads.find(l => l.id === id);
-            if (!lead) return;
-            document.getElementById('modalTitle').innerText = 'Edit Deal Details';
-            document.getElementById('editId').value = lead.id;
-            document.getElementById('name').value = lead.name;
-            document.getElementById('company').value = lead.company;
-            document.getElementById('phone').value = lead.phone;
-            document.getElementById('email').value = lead.email;
-            document.getElementById('value').value = lead.value;
-            document.getElementById('status').value = lead.status;
-            document.getElementById('priority').value = lead.priority || 'Medium';
-            document.getElementById('notes').value = lead.notes;
-            openModal(true);
+        // Printable Official A4 Preview
+        function previewDoc(id) {
+            const d = docs.find(x => x.id === id);
+            if (!d) return;
+            const t = calcDocTotals(d);
+
+            const rowsHTML = d.items.map((item, idx) => `
+                <tr class="border-b border-slate-200">
+                    <td class="py-2.5 px-3 text-center">${idx + 1}</td>
+                    <td class="py-2.5 px-3">
+                        <p class="font-bold text-slate-800">${item.name}</p>
+                        <p class="text-[11px] text-slate-500">Model: ${item.sku} | Spec: ${item.spec}</p>
+                    </td>
+                    <td class="py-2.5 px-3 text-center font-mono">${item.hsn}</td>
+                    <td class="py-2.5 px-3 text-center font-bold">${item.qty} Nos</td>
+                    <td class="py-2.5 px-3 text-right">${formatINR(item.price)}</td>
+                    <td class="py-2.5 px-3 text-right font-bold">${formatINR(item.price * item.qty)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('printArea').innerHTML = `
+                <div class="border-2 border-slate-800 p-6 rounded-lg">
+                    <!-- Header -->
+                    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4">
+                        <div>
+                            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">ARF FOOD PROCESSING MACHINERY</h1>
+                            <p class="text-xs text-slate-600">Manufacturers & Exporters of Commercial Food & Packaging Machines</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Industrial Area, Phase-II, India | Phone: +91-9876543210 | Email: sales@arfmachines.in</p>
+                            <p class="text-xs font-bold text-slate-800 mt-1">GSTIN: 09AAACA1234A1Z5</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block px-3 py-1 bg-slate-900 text-white font-extrabold text-sm uppercase tracking-wider rounded">${d.type}</span>
+                            <p class="font-bold text-slate-800 mt-2">Doc No: ${d.docNo}</p>
+                            <p class="text-slate-500">Date: ${d.date}</p>
+                        </div>
+                    </div>
+
+                    <!-- Party Details -->
+                    <div class="grid grid-cols-2 gap-4 py-4 border-b border-slate-300">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase text-slate-400">Billed / Quoted To:</p>
+                            <p class="font-bold text-sm text-slate-900 mt-0.5">${d.client}</p>
+                            <p class="text-slate-600">${d.address}</p>
+                            <p class="text-slate-600 mt-0.5">Phone: ${d.phone}</p>
+                            <p class="font-bold text-slate-800 mt-0.5">Party GSTIN: ${d.gstin}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold uppercase text-slate-400">Dispatch & Payment Terms:</p>
+                            <p class="text-slate-700 font-medium mt-0.5">${d.terms}</p>
+                            <p class="text-slate-500 mt-1">Warranty: 1 Year Standard Motor & Manufacturing Warranty</p>
+                        </div>
+                    </div>
+
+                    <!-- Line Items Table -->
+                    <table class="w-full text-left border-collapse my-4">
+                        <thead>
+                            <tr class="bg-slate-100 border-y border-slate-300 text-[11px] font-bold uppercase text-slate-700">
+                                <th class="py-2 px-3 text-center">S.No</th>
+                                <th class="py-2 px-3">Machine Description & Specifications</th>
+                                <th class="py-2 px-3 text-center">HSN</th>
+                                <th class="py-2 px-3 text-center">Qty</th>
+                                <th class="py-2 px-3 text-right">Unit Rate</th>
+                                <th class="py-2 px-3 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHTML}</tbody>
+                    </table>
+
+                    <!-- Totals & Bank Box -->
+                    <div class="grid grid-cols-12 gap-6 pt-3 border-t-2 border-slate-800">
+                        <div class="col-span-7 space-y-1 text-[11px]">
+                            <p class="font-bold text-slate-800 uppercase">Company Bank Details (For RTGS / NEFT):</p>
+                            <p>Account Name: <strong>ARF FOOD MACHINERY PVT LTD</strong></p>
+                            <p>Bank Name: <strong>HDFC Bank, Industrial Branch</strong></p>
+                            <p>Account No: <strong>50200012345678</strong> | IFSC: <strong>HDFC0001234</strong></p>
+                            <p class="text-slate-400 pt-2">Note: Subject to local jurisdiction. Goods once sold will be serviced as per warranty policy.</p>
+                        </div>
+                        <div class="col-span-5 space-y-1.5 text-right">
+                            <div class="flex justify-between"><span>Sub-Total (Machinery):</span><span class="font-semibold">${formatINR(t.subTotal)}</span></div>
+                            <div class="flex justify-between"><span>Packing & Forwarding:</span><span class="font-semibold">${formatINR(d.freight)}</span></div>
+                            <div class="flex justify-between"><span>GST (${d.gstRate}%):</span><span class="font-semibold">${formatINR(t.gstAmt)}</span></div>
+                            <div class="flex justify-between text-sm font-extrabold border-t border-slate-300 pt-2 text-slate-900">
+                                <span>Grand Total:</span><span>${formatINR(t.grandTotal)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="flex justify-between items-end pt-10 mt-6">
+                        <p class="text-[11px] text-slate-400">Customer Acceptance Sign & Stamp</p>
+                        <div class="text-right">
+                            <p class="font-bold text-slate-800">For ARF FOOD MACHINERY</p>
+                            <p class="text-[11px] text-slate-400 mt-6">Authorized Signatory</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const m = document.getElementById('printModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
         }
 
-        function deleteLead(id) {
-            if (confirm('Delete this deal permanently?')) {
-                leads = leads.filter(l => l.id !== id);
-                saveToStorage();
-                renderApp();
-            }
+        // Helper Modals
+        function openLeadModal() {
+            document.getElementById('leadForm').reset();
+            document.getElementById('leadModal').classList.remove('hidden');
+            document.getElementById('leadModal').classList.add('flex');
+        }
+        function openMachineModal() {
+            document.getElementById('machineForm').reset();
+            document.getElementById('machineModal').classList.remove('hidden');
+            document.getElementById('machineModal').classList.add('flex');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
         }
 
-        function exportToCSV() {
-            const headers = ['Client Name', 'Company', 'Phone', 'Email', 'Deal Value (INR)', 'Status', 'Priority', 'Notes'];
-            const rows = leads.map(l => [
-                `"${l.name}"`, `"${l.company}"`, `"${l.phone}"`, `"${l.email}"`, l.value, `"${l.status}"`, `"${l.priority}"`, `"${(l.notes || '').replace(/"/g, '""')}"`
-            ]);
-            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `ARF-CRM-Pipeline-${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
+        function quickQuoteFromLead(id) {
+            const l = leads.find(x => x.id === id);
+            openDocModal('Quotation', l);
         }
 
-        // Initialize CRM on page load
-        renderApp();
+        // Add Lead Form Submit
+        document.getElementById('leadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            leads.unshift({
+                id: Date.now(),
+                name: document.getElementById('l_name').value,
+                company: document.getElementById('l_company').value,
+                phone: document.getElementById('l_phone').value,
+                machine: document.getElementById('l_machine').value,
+                budget: Number(document.getElementById('l_budget').value || 0),
+                status: document.getElementById('l_status').value
+            });
+            saveAll();
+            closeModal('leadModal');
+            renderLeads();
+        });
+
+        // Add Machine Form Submit
+        document.getElementById('machineForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            machines.unshift({
+                id: Date.now(),
+                sku: document.getElementById('m_sku').value,
+                name: document.getElementById('m_name').value,
+                cat: document.getElementById('m_cat').value,
+                spec: document.getElementById('m_spec').value,
+                hsn: document.getElementById('m_hsn').value || '8438',
+                price: Number(document.getElementById('m_price').value || 0),
+                stock: Number(document.getElementById('m_stock').value || 0)
+            });
+            saveAll();
+            closeModal('machineModal');
+            renderInventory();
+        });
+
+        function deleteLead(id) { leads = leads.filter(x => x.id !== id); saveAll(); renderLeads(); }
+        function deleteMachine(id) { machines = machines.filter(x => x.id !== id); saveAll(); renderInventory(); }
+        function deleteDoc(id) { docs = docs.filter(x => x.id !== id); saveAll(); renderDocs(); }
+
+        function renderAll() {
+            updateKPIs();
+            renderLeads();
+            renderInventory();
+            renderDocs();
+        }
+
+        renderAll();
     </script>
 </body>
 </html>

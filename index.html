@@ -3,196 +3,664 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARF-CRM | Lead & Client Management</title>
-    <!-- Tailwind CSS CDN -->
+    <title>ARF-CRM | Enterprise Workspace</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+<body class="bg-[#F8FAFC] text-slate-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- Top Navigation Bar -->
-    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-blue-600 p-2 rounded-lg">
-                        <i class="fa-solid fa-chart-pie text-white text-xl"></i>
+    <!-- LEFT SIDEBAR (Enterprise Look) -->
+    <aside class="w-64 bg-[#0F172A] text-slate-300 flex-col justify-between hidden md:flex shrink-0 select-none border-r border-slate-800">
+        <div>
+            <!-- Brand Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-800/80 gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">
+                    A
+                </div>
+                <div>
+                    <span class="font-bold text-white text-base tracking-tight block leading-none">ARF-CRM</span>
+                    <span class="text-[11px] text-indigo-400 font-medium">Enterprise Edition</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="p-4 space-y-1">
+                <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Main Menu</p>
+                <a href="#" onclick="switchView('table')" id="side-table" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-600/15 text-indigo-400 font-medium text-sm transition">
+                    <i class="fa-solid fa-layer-group w-5 text-center"></i> Leads Directory
+                </a>
+                <a href="#" onclick="switchView('kanban')" id="side-kanban" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 font-medium text-sm transition">
+                    <i class="fa-solid fa-table-columns w-5 text-center"></i> Pipeline Board
+                </a>
+                <a href="#" onclick="exportToCSV()" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 font-medium text-sm transition">
+                    <i class="fa-solid fa-file-arrow-down w-5 text-center"></i> Export Reports
+                </a>
+            </div>
+
+            <!-- Quick Pipeline Filter -->
+            <div class="p-4 mt-2 border-t border-slate-800/80">
+                <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Quick Status Filter</p>
+                <div class="space-y-1 text-sm">
+                    <button onclick="quickFilter('All')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
+                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> All Deals</span>
+                        <span id="side-count-all" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button onclick="quickFilter('New Lead')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
+                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> New Leads</span>
+                        <span id="side-count-new" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button onclick="quickFilter('Follow-up')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
+                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> In Follow-up</span>
+                        <span id="side-count-followup" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button onclick="quickFilter('Converted')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800/60 text-slate-400 hover:text-white transition">
+                        <span class="flex items-center gap-2.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Won / Closed</span>
+                        <span id="side-count-won" class="text-xs bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Profile Footer -->
+        <div class="p-4 border-t border-slate-800/80 bg-slate-900/50 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-semibold text-sm">
+                    KA
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-white leading-tight">Workspace Admin</p>
+                    <p class="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
+                    </p>
+                </div>
+            </div>
+            <button onclick="resetDemoData()" title="Reset Sample Data" class="text-slate-500 hover:text-slate-300 text-xs p-1.5">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- RIGHT MAIN WORKSPACE -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+
+        <!-- Top Header -->
+        <header class="h-16 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-lg font-bold text-slate-800 tracking-tight">Sales & Client Pipeline</h1>
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    <i class="fa-solid fa-bolt text-[10px]"></i> Live Sync Active
+                </span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- View Switcher Buttons -->
+                <div class="bg-slate-100 p-1 rounded-lg border border-slate-200 hidden sm:flex items-center text-xs font-medium">
+                    <button onclick="switchView('table')" id="btn-view-table" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-list"></i> List
+                    </button>
+                    <button onclick="switchView('kanban')" id="btn-view-kanban" class="px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-grip-vertical"></i> Board
+                    </button>
+                </div>
+
+                <button onclick="exportToCSV()" class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-2 shadow-2xs">
+                    <i class="fa-solid fa-download text-slate-400"></i> <span class="hidden sm:inline">Export CSV</span>
+                </button>
+
+                <button onclick="openModal()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition flex items-center gap-2 shadow-sm shadow-indigo-500/20 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> Add New Deal
+                </button>
+            </div>
+        </header>
+
+        <!-- Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- KPI Analytics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Card 1 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pipeline Value</span>
+                        <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-indian-rupee-sign text-sm"></i>
+                        </span>
                     </div>
-                    <span class="font-bold text-xl tracking-wide">ARF-CRM</span>
+                    <h3 id="stat-pipeline" class="text-2xl font-bold text-slate-900 mt-3">₹0</h3>
+                    <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                        <span class="text-emerald-600 font-semibold"><i class="fa-solid fa-arrow-trend-up"></i> Active</span> across <span id="stat-total">0</span> deals
+                    </p>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="exportToCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border border-slate-700">
-                        <i class="fa-solid fa-file-csv text-green-400"></i> 
-                        <span class="hidden sm:inline">Export Excel/CSV</span>
-                    </button>
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-md">
-                        <i class="fa-solid fa-plus"></i> Add New Lead
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Card 2 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Closed / Won Revenue</span>
+                        <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fa-solid fa-sack-dollar text-sm"></i>
+                        </span>
+                    </div>
+                    <h3 id="stat-won-value" class="text-2xl font-bold text-emerald-600 mt-3">₹0</h3>
+                    <p class="text-xs text-slate-400 mt-1">
+                        <span id="stat-converted" class="font-semibold text-slate-700">0</span> deals converted
+                    </p>
+                </div>
 
-        <!-- Dashboard Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Leads</p>
-                    <h3 id="stat-total" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+                <!-- Card 3 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Follow-ups</span>
+                        <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                        </span>
+                    </div>
+                    <h3 id="stat-followup" class="text-2xl font-bold text-slate-900 mt-3">0</h3>
+                    <p class="text-xs text-amber-600 font-medium mt-1">Requires immediate attention</p>
                 </div>
-                <div class="bg-blue-50 p-3.5 rounded-xl text-blue-600">
-                    <i class="fa-solid fa-users text-2xl"></i>
-                </div>
-            </div>
 
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">New Leads</p>
-                    <h3 id="stat-new" class="text-3xl font-bold text-amber-600 mt-1">0</h3>
-                </div>
-                <div class="bg-amber-50 p-3.5 rounded-xl text-amber-600">
-                    <i class="fa-solid fa-bolt text-2xl"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Follow-Up / In Progress</p>
-                    <h3 id="stat-followup" class="text-3xl font-bold text-purple-600 mt-1">0</h3>
-                </div>
-                <div class="bg-purple-50 p-3.5 rounded-xl text-purple-600">
-                    <i class="fa-solid fa-phone-volume text-2xl"></i>
+                <!-- Card 4 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Win Conversion Rate</span>
+                        <span class="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-sm"></i>
+                        </span>
+                    </div>
+                    <h3 id="stat-rate" class="text-2xl font-bold text-slate-900 mt-3">0%</h3>
+                    <p class="text-xs text-slate-400 mt-1"><span id="stat-new" class="font-semibold text-blue-600">0</span> fresh leads in queue</p>
                 </div>
             </div>
 
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Converted (Won)</p>
-                    <h3 id="stat-converted" class="text-3xl font-bold text-emerald-600 mt-1">0</h3>
+            <!-- Search & Filter Controls -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row gap-3 justify-between items-center">
+                <div class="relative w-full md:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="renderApp()" placeholder="Search client, company, phone or notes..." 
+                        class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
                 </div>
-                <div class="bg-emerald-50 p-3.5 rounded-xl text-emerald-600">
-                    <i class="fa-solid fa-circle-check text-2xl"></i>
+
+                <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                    <select id="statusFilter" onchange="renderApp()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 focus:outline-none focus:border-indigo-500">
+                        <option value="All">Status: All Deals</option>
+                        <option value="New Lead">New Lead</option>
+                        <option value="Follow-up">Follow-up</option>
+                        <option value="Converted">Converted (Won)</option>
+                        <option value="Lost">Closed Lost</option>
+                    </select>
+
+                    <select id="priorityFilter" onchange="renderApp()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 focus:outline-none focus:border-indigo-500">
+                        <option value="All">Priority: All</option>
+                        <option value="High">🔥 High Priority</option>
+                        <option value="Medium">⚡ Medium</option>
+                        <option value="Low">🌱 Low</option>
+                    </select>
                 </div>
             </div>
-        </div>
 
-        <!-- Search and Filter Bar -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div class="relative w-full md:w-96">
-                <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400"></i>
-                <input type="text" id="searchInput" oninput="renderLeads()" placeholder="Search by name, phone, email or company..." 
-                    class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div class="flex gap-3 w-full md:w-auto">
-                <select id="statusFilter" onchange="renderLeads()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full md:w-48">
-                    <option value="All">All Statuses</option>
-                    <option value="New Lead">New Lead</option>
-                    <option value="Follow-up">Follow-up</option>
-                    <option value="Converted">Converted</option>
-                    <option value="Lost">Lost</option>
-                </select>
-            </div>
-        </div>
+            <!-- VIEW 1: MODERN ENTERPRISE TABLE -->
+            <div id="tableView" class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                <th class="py-3.5 px-5">Client & Company</th>
+                                <th class="py-3.5 px-4">Quick Contact</th>
+                                <th class="py-3.5 px-4">Deal Value</th>
+                                <th class="py-3.5 px-4">Stage / Status</th>
+                                <th class="py-3.5 px-4">Priority</th>
+                                <th class="py-3.5 px-4">Next Follow-up / Notes</th>
+                                <th class="py-3.5 px-5 text-right">Manage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadList" class="divide-y divide-slate-100 text-xs">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
 
-        <!-- Leads Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-semibold">
-                            <th class="p-4">Client / Company</th>
-                            <th class="p-4">Contact</th>
-                            <th class="p-4">Deal Value</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Notes / Follow-up</th>
-                            <th class="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leadList" class="divide-y divide-slate-200 text-sm">
-                        <!-- Leads will be injected here by app.js -->
-                    </tbody>
-                </table>
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden text-center py-14 px-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </div>
+                    <p class="text-slate-700 font-semibold text-sm">No matching deals found</p>
+                    <p class="text-slate-400 text-xs mt-1">Try clearing filters or click "+ Add New Deal" to create one.</p>
+                </div>
             </div>
-            <!-- Empty State Message -->
-            <div id="emptyState" class="hidden text-center py-12 px-4">
-                <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-medium">No leads found</p>
-                <p class="text-slate-400 text-xs mt-1">Click "+ Add New Lead" at the top to add your first client.</p>
+
+            <!-- VIEW 2: KANBAN PIPELINE BOARD -->
+            <div id="kanbanView" class="hidden grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Columns injected via JS -->
             </div>
-        </div>
 
-    </main>
+        </main>
+    </div>
 
-    <!-- Add / Edit Lead Modal -->
+    <!-- ADD / EDIT MODAL -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
-                <h3 id="modalTitle" class="text-lg font-semibold">Add New Lead</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-xmark text-xl"></i>
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </span>
+                    <h3 id="modalTitle" class="text-sm font-bold tracking-wide">Add New Deal</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
-            <form id="leadForm" class="p-6 space-y-4">
-                <input type="hidden" id="editIndex">
-
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Client Name *</label>
-                    <input type="text" id="name" required placeholder="e.g. Rahul Sharma" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
+            <form id="leadForm" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="editId">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Phone (WhatsApp) *</label>
-                        <input type="tel" id="phone" required placeholder="e.g. 9876543210" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <label class="block font-semibold text-slate-600 mb-1.5">Client Full Name *</label>
+                        <input type="text" id="name" required placeholder="e.g. Vikramaditya Singh" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Email</label>
-                        <input type="email" id="email" placeholder="client@email.com" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <label class="block font-semibold text-slate-600 mb-1.5">Company / Organization *</label>
+                        <input type="text" id="company" required placeholder="e.g. TechNova Solutions" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Company / Project</label>
-                        <input type="text" id="company" placeholder="e.g. ABC Enterprises" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <label class="block font-semibold text-slate-600 mb-1.5">WhatsApp Phone *</label>
+                        <input type="tel" id="phone" required placeholder="e.g. 9876543210" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Deal Value (₹)</label>
-                        <input type="number" id="value" placeholder="e.g. 25000" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <label class="block font-semibold text-slate-600 mb-1.5">Email Address</label>
+                        <input type="email" id="email" placeholder="vikram@technova.in" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1.5">Deal Value (₹) *</label>
+                        <input type="number" id="value" required placeholder="45000" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1.5">Pipeline Stage</label>
+                        <select id="status" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:border-indigo-500 focus:outline-none">
+                            <option value="New Lead">New Lead</option>
+                            <option value="Follow-up">Follow-up</option>
+                            <option value="Converted">Converted</option>
+                            <option value="Lost">Lost</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1.5">Priority</label>
+                        <select id="priority" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:border-indigo-500 focus:outline-none">
+                            <option value="High">🔥 High</option>
+                            <option value="Medium" selected>⚡ Medium</option>
+                            <option value="Low">🌱 Low</option>
+                        </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Lead Status</label>
-                    <select id="status" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-                        <option value="New Lead">New Lead</option>
-                        <option value="Follow-up">Follow-up</option>
-                        <option value="Converted">Converted</option>
-                        <option value="Lost">Lost</option>
-                    </select>
+                    <label class="block font-semibold text-slate-600 mb-1.5">Follow-up Date & Deal Notes</label>
+                    <textarea id="notes" rows="2" placeholder="e.g. Demo scheduled on Friday at 3 PM. Interested in annual plan." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Follow-up Notes / Requirement</label>
-                    <textarea id="notes" rows="2" placeholder="Call tomorrow at 4 PM regarding website quotation..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-600 text-sm hover:bg-slate-100">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm">Save Lead</button>
+                <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-semibold hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-500 shadow-sm shadow-indigo-500/20">Save Deal</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Main JavaScript File -->
-    <script src="app.js"></script>
+    <!-- APPLICATION LOGIC -->
+    <script>
+        const defaultLeads = [
+            { id: 1, name: "Aarav Mehta", company: "CloudScale India Pvt Ltd", phone: "9876543210", email: "aarav@cloudscale.in", value: 125000, status: "Converted", priority: "High", notes: "Annual ERP contract signed & initial invoice paid." },
+            { id: 2, name: "Priya Nair", company: "UrbanCraft Retail", phone: "9811122233", email: "priya@urbancraft.com", value: 65000, status: "Follow-up", priority: "High", notes: "Product demo done. Call on Thursday for final pricing." },
+            { id: 3, name: "Rohan Deshmukh", company: "Apex Logistics", phone: "9922334455", email: "rohan@apexlog.in", value: 42000, status: "New Lead", priority: "Medium", notes: "Inbound inquiry from website regarding CRM automation." },
+            { id: 4, name: "Zoya Khan", company: "Studio Zenith", phone: "9765432109", email: "zoya@studiozenith.co", value: 88000, status: "Follow-up", priority: "Medium", notes: "Sent revised quotation on WhatsApp." },
+            { id: 5, name: "Siddharth Verma", company: "FinEdge Advisory", phone: "9123456780", email: "sid@finedge.in", value: 150000, status: "Converted", priority: "High", notes: "Full enterprise onboarding completed." }
+        ];
+
+        let leads = JSON.parse(localStorage.getItem('arf_crm_v2')) || defaultLeads;
+        let currentView = 'table';
+
+        function saveToStorage() {
+            localStorage.setItem('arf_crm_v2', JSON.stringify(leads));
+        }
+
+        function resetDemoData() {
+            if (confirm("Reset CRM to default sample deals?")) {
+                leads = [...defaultLeads];
+                saveToStorage();
+                renderApp();
+            }
+        }
+
+        function formatINR(num) {
+            return '₹' + Number(num || 0).toLocaleString('en-IN');
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        }
+
+        function getStatusBadge(status) {
+            const styles = {
+                'New Lead': 'bg-blue-50 text-blue-700 border-blue-200',
+                'Follow-up': 'bg-amber-50 text-amber-700 border-amber-200',
+                'Converted': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                'Lost': 'bg-rose-50 text-rose-700 border-rose-200'
+            };
+            const dots = {
+                'New Lead': 'bg-blue-500',
+                'Follow-up': 'bg-amber-500',
+                'Converted': 'bg-emerald-500',
+                'Lost': 'bg-rose-500'
+            };
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${styles[status] || styles['New Lead']}">
+                        <span class="w-1.5 h-1.5 rounded-full ${dots[status] || dots['New Lead']}"></span> ${status}
+                    </span>`;
+        }
+
+        function getPriorityBadge(priority) {
+            const map = {
+                'High': '<span class="text-rose-600 bg-rose-50 px-2 py-0.5 rounded font-semibold text-[11px]">🔥 High</span>',
+                'Medium': '<span class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded font-semibold text-[11px]">⚡ Medium</span>',
+                'Low': '<span class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-semibold text-[11px]">🌱 Low</span>'
+            };
+            return map[priority] || map['Medium'];
+        }
+
+        function updateStats() {
+            const total = leads.length;
+            const newLeads = leads.filter(l => l.status === 'New Lead').length;
+            const followups = leads.filter(l => l.status === 'Follow-up').length;
+            const converted = leads.filter(l => l.status === 'Converted').length;
+
+            const pipelineValue = leads.filter(l => l.status !== 'Lost').reduce((acc, l) => acc + Number(l.value || 0), 0);
+            const wonValue = leads.filter(l => l.status === 'Converted').reduce((acc, l) => acc + Number(l.value || 0), 0);
+            const winRate = total > 0 ? Math.round((converted / total) * 100) : 0;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-new').innerText = newLeads;
+            document.getElementById('stat-followup').innerText = followups;
+            document.getElementById('stat-converted').innerText = converted;
+            document.getElementById('stat-pipeline').innerText = formatINR(pipelineValue);
+            document.getElementById('stat-won-value').innerText = formatINR(wonValue);
+            document.getElementById('stat-rate').innerText = winRate + '%';
+
+            // Sidebar counts
+            document.getElementById('side-count-all').innerText = total;
+            document.getElementById('side-count-new').innerText = newLeads;
+            document.getElementById('side-count-followup').innerText = followups;
+            document.getElementById('side-count-won').innerText = converted;
+        }
+
+        function getFilteredLeads() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const priority = document.getElementById('priorityFilter').value;
+
+            return leads.filter(l => {
+                const matchesQ = l.name.toLowerCase().includes(q) ||
+                                 (l.company && l.company.toLowerCase().includes(q)) ||
+                                 l.phone.includes(q) ||
+                                 (l.notes && l.notes.toLowerCase().includes(q));
+                const matchesS = status === 'All' || l.status === status;
+                const matchesP = priority === 'All' || l.priority === priority;
+                return matchesQ && matchesS && matchesP;
+            });
+        }
+
+        function renderApp() {
+            updateStats();
+            const filtered = getFilteredLeads();
+            const tbody = document.getElementById('leadList');
+            const emptyState = document.getElementById('emptyState');
+
+            // Render Table
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filtered.forEach(lead => {
+                    const cleanPhone = lead.phone.replace(/\D/g, '');
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50/90 transition group">
+                            <td class="py-3.5 px-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center shrink-0">
+                                        ${getInitials(lead.name)}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">${lead.name}</p>
+                                        <p class="text-[11px] text-slate-400 font-medium">${lead.company || 'Private Client'}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-1.5">
+                                    <a href="https://wa.me/91${cleanPhone}" target="_blank" title="WhatsApp Client" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white flex items-center justify-center transition">
+                                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    </a>
+                                    <a href="tel:${cleanPhone}" title="Call Client" class="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white flex items-center justify-center transition">
+                                        <i class="fa-solid fa-phone text-[11px]"></i>
+                                    </a>
+                                    <span class="text-slate-600 font-medium ml-1">${lead.phone}</span>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 font-bold text-slate-800">${formatINR(lead.value)}</td>
+                            <td class="py-3.5 px-4">${getStatusBadge(lead.status)}</td>
+                            <td class="py-3.5 px-4">${getPriorityBadge(lead.priority)}</td>
+                            <td class="py-3.5 px-4 max-w-xs">
+                                <p class="text-slate-600 truncate" title="${lead.notes || ''}">${lead.notes || '<span class="text-slate-300">No notes added</span>'}</p>
+                            </td>
+                            <td class="py-3.5 px-5 text-right">
+                                <div class="inline-flex items-center gap-1">
+                                    <button onclick="editLead(${lead.id})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition" title="Edit Deal">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="deleteLead(${lead.id})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Delete Deal">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Render Kanban Board
+            renderKanban(filtered);
+        }
+
+        function renderKanban(filtered) {
+            const stages = ['New Lead', 'Follow-up', 'Converted', 'Lost'];
+            const colors = {
+                'New Lead': 'border-t-blue-500',
+                'Follow-up': 'border-t-amber-500',
+                'Converted': 'border-t-emerald-500',
+                'Lost': 'border-t-rose-500'
+            };
+            const container = document.getElementById('kanbanView');
+            container.innerHTML = '';
+
+            stages.forEach(stage => {
+                const stageLeads = filtered.filter(l => l.status === stage);
+                const stageTotal = stageLeads.reduce((sum, l) => sum + Number(l.value || 0), 0);
+
+                let cardsHTML = stageLeads.map(lead => `
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-md transition space-y-2.5">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-xs">${lead.name}</h4>
+                                <p class="text-[11px] text-slate-400">${lead.company}</p>
+                            </div>
+                            ${getPriorityBadge(lead.priority)}
+                        </div>
+                        <p class="text-[11px] text-slate-500 line-clamp-2">${lead.notes || 'No notes'}</p>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span class="font-bold text-xs text-indigo-600">${formatINR(lead.value)}</span>
+                            <div class="flex items-center gap-1.5">
+                                <a href="https://wa.me/91${lead.phone.replace(/\D/g, '')}" target="_blank" class="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><i class="fa-brands fa-whatsapp"></i></a>
+                                <button onclick="editLead(${lead.id})" class="text-slate-400 hover:text-indigo-600 p-1 rounded"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML += `
+                    <div class="bg-slate-100/80 rounded-2xl p-3.5 border border-slate-200/70 border-t-4 ${colors[stage]} flex flex-col gap-3">
+                        <div class="flex items-center justify-between px-1">
+                            <div>
+                                <h3 class="font-bold text-xs text-slate-800">${stage} <span class="ml-1 text-[11px] bg-white px-2 py-0.5 rounded-full border border-slate-200 text-slate-500">${stageLeads.length}</span></h3>
+                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">${formatINR(stageTotal)}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2.5 min-h-[120px]">
+                            ${cardsHTML || '<p class="text-center text-[11px] text-slate-400 py-8">No deals in this stage</p>'}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const tableEl = document.getElementById('tableView');
+            const kanbanEl = document.getElementById('kanbanView');
+            const btnTable = document.getElementById('btn-view-table');
+            const btnKanban = document.getElementById('btn-view-kanban');
+
+            if (view === 'kanban') {
+                tableEl.classList.add('hidden');
+                kanbanEl.classList.remove('hidden');
+                kanbanEl.classList.add('grid');
+                btnKanban.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5";
+                btnTable.className = "px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5";
+            } else {
+                tableEl.classList.remove('hidden');
+                kanbanEl.classList.add('hidden');
+                kanbanEl.classList.remove('grid');
+                btnTable.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5";
+                btnKanban.className = "px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5";
+            }
+        }
+
+        function quickFilter(status) {
+            document.getElementById('statusFilter').value = status;
+            renderApp();
+        }
+
+        function openModal(isEdit = false) {
+            const modal = document.getElementById('leadModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if (!isEdit) {
+                document.getElementById('modalTitle').innerText = 'Add New Deal';
+                document.getElementById('leadForm').reset();
+                document.getElementById('editId').value = '';
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('leadModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('leadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editId').value;
+            const dealData = {
+                id: editId ? Number(editId) : Date.now(),
+                name: document.getElementById('name').value.trim(),
+                company: document.getElementById('company').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                value: Number(document.getElementById('value').value || 0),
+                status: document.getElementById('status').value,
+                priority: document.getElementById('priority').value,
+                notes: document.getElementById('notes').value.trim()
+            };
+
+            if (editId) {
+                const idx = leads.findIndex(l => l.id === Number(editId));
+                if (idx > -1) leads[idx] = dealData;
+            } else {
+                leads.unshift(dealData);
+            }
+
+            saveToStorage();
+            closeModal();
+            renderApp();
+        });
+
+        function editLead(id) {
+            const lead = leads.find(l => l.id === id);
+            if (!lead) return;
+            document.getElementById('modalTitle').innerText = 'Edit Deal Details';
+            document.getElementById('editId').value = lead.id;
+            document.getElementById('name').value = lead.name;
+            document.getElementById('company').value = lead.company;
+            document.getElementById('phone').value = lead.phone;
+            document.getElementById('email').value = lead.email;
+            document.getElementById('value').value = lead.value;
+            document.getElementById('status').value = lead.status;
+            document.getElementById('priority').value = lead.priority || 'Medium';
+            document.getElementById('notes').value = lead.notes;
+            openModal(true);
+        }
+
+        function deleteLead(id) {
+            if (confirm('Delete this deal permanently?')) {
+                leads = leads.filter(l => l.id !== id);
+                saveToStorage();
+                renderApp();
+            }
+        }
+
+        function exportToCSV() {
+            const headers = ['Client Name', 'Company', 'Phone', 'Email', 'Deal Value (INR)', 'Status', 'Priority', 'Notes'];
+            const rows = leads.map(l => [
+                `"${l.name}"`, `"${l.company}"`, `"${l.phone}"`, `"${l.email}"`, l.value, `"${l.status}"`, `"${l.priority}"`, `"${(l.notes || '').replace(/"/g, '""')}"`
+            ]);
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ARF-CRM-Pipeline-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        // Initialize CRM on page load
+        renderApp();
+    </script>
 </body>
 </html>

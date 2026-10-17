@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Simple CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">🚀 Client CRM Dashboard</h1>
+
+        <!-- Add Lead Form -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">Add New Lead / Client</h2>
+            <form id="crmForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="name" placeholder="Client Name" required class="border p-2 rounded">
+                <input type="email" id="email" placeholder="Email Address" required class="border p-2 rounded">
+                <select id="status" class="border p-2 rounded">
+                    <option value="New Lead">New Lead</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Converted">Converted</option>
+                </select>
+                <button type="submit" class="bg-blue-600 text-white font-semibold p-2 rounded hover:bg-blue-700">
+                    + Add Client
+                </button>
+            </form>
+        </div>
+
+        <!-- Clients Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="p-4">Name</th>
+                        <th class="p-4">Email</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="clientList" class="divide-y"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('crmForm');
+        const clientList = document.getElementById('clientList');
+        let clients = JSON.parse(localStorage.getItem('crm_clients')) || [];
+
+        function renderClients() {
+            clientList.innerHTML = '';
+            clients.forEach((client, index) => {
+                clientList.innerHTML += `
+                    <tr>
+                        <td class="p-4 font-medium">${client.name}</td>
+                        <td class="p-4 text-gray-600">${client.email}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 text-sm rounded bg-blue-100 text-blue-800">${client.status}</span>
+                        </td>
+                        <td class="p-4">
+                            <button onclick="deleteClient(${index})" class="text-red-500 hover:underline">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newClient = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                status: document.getElementById('status').value
+            };
+            clients.push(newClient);
+            localStorage.setItem('crm_clients', JSON.stringify(clients));
+            form.reset();
+            renderClients();
+        });
+
+        function deleteClient(index) {
+            clients.splice(index, 1);
+            localStorage.setItem('crm_clients', JSON.stringify(clients));
+            renderClients();
+        }
+
+        renderClients();
+    </script>
+</body>
+</html>

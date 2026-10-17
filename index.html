@@ -43,8 +43,8 @@
             <div class="p-4 space-y-1.5">
                 <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">ERP Modules</p>
                 
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-orange-500/15 text-orange-400 font-semibold text-xs transition">
-                    <i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i> Dashboard & Leads
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-orange-500/15 text-orange-400 font-semibold text-xs transition">
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i> Dashboard & Leads</span>
                 </button>
                 
                 <button onclick="switchTab('inventory')" id="nav-inventory" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition">
@@ -77,10 +77,10 @@
         <div class="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
             <div>
                 <p class="text-xs font-bold text-white">ARF Food Machinery</p>
-                <p class="text-[10px] text-slate-400">GSTIN: 09AAACA1234A1Z5</p>
+                <p class="text-[10px] text-slate-400">Clean Workspace Ready</p>
             </div>
-            <button onclick="resetAllData()" title="Reset Sample Factory Data" class="text-slate-500 hover:text-orange-400 p-1.5 text-xs">
-                <i class="fa-solid fa-rotate"></i>
+            <button onclick="clearAllData()" title="Clear All Data" class="text-slate-500 hover:text-rose-400 p-1.5 text-xs">
+                <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>
     </aside>
@@ -105,8 +105,11 @@
                     <button onclick="switchTab('billing')" class="px-2 py-1 rounded">Billing</button>
                 </div>
 
+                <button onclick="openMachineModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-gears text-blue-600"></i> + Add Machine
+                </button>
                 <button onclick="openLeadModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-user-plus text-orange-500"></i> Add Inquiry
+                    <i class="fa-solid fa-user-plus text-orange-500"></i> + Add Inquiry
                 </button>
                 <button onclick="openDocModal('Quotation')" class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm shadow-orange-500/20">
                     <i class="fa-solid fa-file-invoice"></i> Create Quote / PI / Bill
@@ -134,7 +137,7 @@
                         <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-gears"></i></span>
                     </div>
                     <h3 id="kpi-stock" class="text-2xl font-extrabold text-slate-800 mt-2">0 Units</h3>
-                    <p id="kpi-lowstock" class="text-[11px] text-amber-600 font-semibold mt-1">Ready for dispatch</p>
+                    <p class="text-[11px] text-emerald-600 font-semibold mt-1">Ready for dispatch</p>
                 </div>
 
                 <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -152,7 +155,7 @@
                         <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-indian-rupee-sign"></i></span>
                     </div>
                     <h3 id="kpi-billed" class="text-2xl font-extrabold text-emerald-600 mt-2">₹0</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Incl. 18% GST collections</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Incl. GST collections</p>
                 </div>
             </div>
 
@@ -199,10 +202,10 @@
                 <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row justify-between gap-3 items-center">
                     <div>
                         <h2 class="text-sm font-bold text-slate-800">Food Processing Machinery Catalog & Stock</h2>
-                        <p class="text-xs text-slate-400">Manage ready stock, machine capacities, HSN codes, and base selling prices.</p>
+                        <p class="text-xs text-slate-400">Add your machines here first to select them easily while making Quotations, PI, or Bills.</p>
                     </div>
                     <button onclick="openMachineModal()" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Add New Machine to Catalog
+                        <i class="fa-solid fa-plus"></i> Add Machine to Inventory
                     </button>
                 </div>
 
@@ -229,13 +232,13 @@
             <!-- ================= TAB 3: QUOTATIONS, PI & GST BILLS ================= -->
             <section id="tab-billing" class="hidden space-y-4">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row justify-between gap-3 items-center">
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <button onclick="filterDocs('All')" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold">All Documents</button>
                         <button onclick="filterDocs('Quotation')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold">Quotations</button>
                         <button onclick="filterDocs('Proforma Invoice')" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold">Proforma Invoices (PI)</button>
                         <button onclick="filterDocs('Tax Invoice')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold">Final GST Bills</button>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <button onclick="openDocModal('Quotation')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold">+ New Quotation</button>
                         <button onclick="openDocModal('Proforma Invoice')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold">+ New PI</button>
                         <button onclick="openDocModal('Tax Invoice')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold">+ New GST Bill</button>
@@ -264,7 +267,7 @@
         </main>
     </div>
 
-    <!-- ================= MODAL 1: ADD/EDIT BUYER INQUIRY ================= -->
+    <!-- ================= MODAL 1: ADD BUYER INQUIRY ================= -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
@@ -274,26 +277,26 @@
             <form id="leadForm" class="p-6 space-y-3.5 text-xs">
                 <div>
                     <label class="font-semibold text-slate-600 block mb-1">Buyer Name *</label>
-                    <input type="text" id="l_name" required placeholder="e.g. राजेश अग्रवाल (Rajesh Foods)" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                    <input type="text" id="l_name" required placeholder="Enter buyer full name" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Company & City *</label>
-                        <input type="text" id="l_company" required placeholder="Swad Spices, Indore" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="text" id="l_company" required placeholder="Company name & city" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">WhatsApp Phone *</label>
-                        <input type="tel" id="l_phone" required placeholder="9876543210" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="tel" id="l_phone" required placeholder="10-digit mobile number" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Interested Machine *</label>
-                        <input type="text" id="l_machine" required placeholder="Masala Pulverizer 5HP" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="text" id="l_machine" required placeholder="Machine name / capacity" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Estimated Value (₹)</label>
-                        <input type="number" id="l_budget" required placeholder="85000" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="number" id="l_budget" required placeholder="0" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                 </div>
                 <div>
@@ -323,12 +326,12 @@
             <form id="machineForm" class="p-6 space-y-3.5 text-xs">
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-1">
-                        <label class="font-semibold text-slate-600 block mb-1">Model SKU *</label>
-                        <input type="text" id="m_sku" required placeholder="ARF-MP05" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <label class="font-semibold text-slate-600 block mb-1">Model Code *</label>
+                        <input type="text" id="m_sku" required placeholder="ARF-01" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                     <div class="col-span-2">
                         <label class="font-semibold text-slate-600 block mb-1">Machine Name *</label>
-                        <input type="text" id="m_name" required placeholder="SS Masala Pulverizer Machine" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="text" id="m_name" required placeholder="Enter machine name" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -340,11 +343,12 @@
                             <option value="Snack & Namkeen Line">Snack & Namkeen Line</option>
                             <option value="Bakery & Dough">Bakery & Dough</option>
                             <option value="Dehydration & Roasting">Dehydration & Roasting</option>
+                            <option value="Other Food Machine">Other Food Machine</option>
                         </select>
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Capacity / Motor *</label>
-                        <input type="text" id="m_spec" required placeholder="50 Kg/hr | 5 HP SS304" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="text" id="m_spec" required placeholder="e.g. 50 Kg/hr | 5 HP" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
@@ -354,11 +358,11 @@
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Rate (₹) *</label>
-                        <input type="number" id="m_price" required placeholder="65000" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="number" id="m_price" required placeholder="0" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Stock Qty *</label>
-                        <input type="number" id="m_stock" required placeholder="5" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="number" id="m_stock" required placeholder="1" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
@@ -388,32 +392,32 @@
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Buyer / Party Name *</label>
-                        <input type="text" id="d_client" required placeholder="e.g. M/s Annapurna Agro Foods" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="text" id="d_client" required placeholder="Enter client or company name" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Buyer GSTIN (Optional)</label>
-                        <input type="text" id="d_gstin" placeholder="08ABCDE1234F1Z5" class="w-full border border-slate-200 rounded-xl px-3 py-2 uppercase">
+                        <input type="text" id="d_gstin" placeholder="Optional GSTIN" class="w-full border border-slate-200 rounded-xl px-3 py-2 uppercase">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Billing Address & State *</label>
-                        <input type="text" id="d_address" required placeholder="Plot 14, Industrial Area, Kanpur, UP" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="text" id="d_address" required placeholder="Full address & state" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                     <div>
                         <label class="font-semibold text-slate-600 block mb-1">Buyer Phone *</label>
-                        <input type="tel" id="d_phone" required placeholder="9876543210" class="w-full border border-slate-200 rounded-xl px-3 py-2">
+                        <input type="tel" id="d_phone" required placeholder="10-digit mobile number" class="w-full border border-slate-200 rounded-xl px-3 py-2">
                     </div>
                 </div>
 
-                <!-- Machine Selection Line Items -->
+                <!-- Machine Selection / Manual Line Items -->
                 <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/60 space-y-3">
                     <div class="flex justify-between items-center">
-                        <span class="font-bold text-slate-700">Select Machines from Inventory</span>
-                        <button type="button" onclick="addDocItemRow()" class="text-orange-600 font-bold hover:underline">+ Add Another Machine</button>
+                        <span class="font-bold text-slate-700">Machine Details (Select from Inventory or Type Manually)</span>
+                        <button type="button" onclick="addDocItemRow()" class="text-orange-600 font-bold hover:underline">+ Add Machine Row</button>
                     </div>
-                    <div id="docItemsContainer" class="space-y-2"></div>
+                    <div id="docItemsContainer" class="space-y-2.5"></div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -427,7 +431,7 @@
                             <option value="18" selected>18% GST (Machinery Standard)</option>
                             <option value="12">12% GST</option>
                             <option value="5">5% GST</option>
-                            <option value="0">0% (Export / Exempt)</option>
+                            <option value="0">0% (Without GST)</option>
                         </select>
                     </div>
                     <div>
@@ -447,7 +451,6 @@
     <!-- ================= MODAL 4: PRINTABLE A4 QUOTATION / PI / TAX INVOICE ================= -->
     <div id="printModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-xs hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden my-auto">
-            <!-- Top Control Bar (Hidden on Print) -->
             <div class="no-print px-6 py-3 bg-slate-900 text-white flex justify-between items-center">
                 <span class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-print mr-1"></i> Official A4 Document Preview</span>
                 <div class="flex gap-2">
@@ -457,93 +460,30 @@
                     <button onclick="closeModal('printModal')" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs">Close</button>
                 </div>
             </div>
-
-            <!-- Printable Invoice Area -->
             <div id="printArea" class="p-8 text-slate-800 text-xs space-y-6 bg-white"></div>
         </div>
     </div>
 
-    <!-- ================= ERP APPLICATION JAVASCRIPT ================= -->
+    <!-- ================= ERP APPLICATION JAVASCRIPT (100% CLEAN EMPTY DATA) ================= -->
     <script>
-        // 1. Default Food Processing Machines Inventory
-        const defaultMachines = [
-            { id: 101, sku: "ARF-MP10", name: "Heavy Duty Double Stage Masala Pulverizer", cat: "Grinding & Pulverizing", spec: "100 Kg/hr | 10 HP Motor | SS-304", hsn: "8437", price: 115000, stock: 6 },
-            { id: 102, sku: "ARF-PP50", name: "Automatic Pneumatic Pouch Packing Machine", cat: "Packaging Machinery", spec: "40-60 Pouches/min | 10g-500g", hsn: "8422", price: 165000, stock: 4 },
-            { id: 103, sku: "ARF-PC200", name: "Commercial Potato Peeler & Slicer Line", cat: "Snack & Namkeen Line", spec: "200 Kg/hr | 2 HP | SS-304 Food Grade", hsn: "8438", price: 78000, stock: 8 },
-            { id: 104, sku: "ARF-DK50", name: "Commercial Spiral Atta & Maida Kneader", cat: "Bakery & Dough", spec: "50 Kg Batch | Heavy Duty Gear Box", hsn: "8438", price: 54000, stock: 2 },
-            { id: 105, sku: "ARF-TD24", name: "24-Tray Hot Air Food & Spice Dryer Oven", cat: "Dehydration & Roasting", spec: "24 SS Trays | Digital PID Temp Control", hsn: "8419", price: 92000, stock: 5 }
-        ];
-
-        // 2. Default Machinery Buyer Leads
-        const defaultLeads = [
-            { id: 1, name: "Rakesh Gupta", company: "Chambal Spices, Gwalior", phone: "9826011223", machine: "Heavy Duty Double Stage Masala Pulverizer", budget: 115000, status: "PI Issued" },
-            { id: 2, name: "Mohd. Tariq", company: "Royal Namkeen & Snacks, Lucknow", phone: "9839044556", machine: "Automatic Pneumatic Pouch Packing Machine", budget: 165000, status: "Quotation Sent" },
-            { id: 3, name: "Suresh Patel", company: "Kisan Agro Dehydration, Rajkot", phone: "9925077889", machine: "24-Tray Hot Air Food & Spice Dryer Oven", budget: 92000, status: "Order Confirmed" }
-        ];
-
-        // 3. Default Quotations / PI / Tax Invoices
-        const defaultDocs = [
-            {
-                id: 501,
-                docNo: "ARF/QTN/2026/01",
-                date: "2026-10-14",
-                type: "Quotation",
-                client: "M/s Royal Namkeen & Snacks",
-                gstin: "09AAACR8899B1Z2",
-                address: "Industrial Estate, Talkatora, Lucknow, UP",
-                phone: "9839044556",
-                items: [{ sku: "ARF-PP50", name: "Automatic Pneumatic Pouch Packing Machine", spec: "40-60 Pouches/min | 10g-500g", hsn: "8422", qty: 1, price: 165000 }],
-                freight: 4500,
-                gstRate: 18,
-                terms: "50% Advance along with Official PO, Balance 50% Prior to Dispatch."
-            },
-            {
-                id: 502,
-                docNo: "ARF/PI/2026/02",
-                date: "2026-10-16",
-                type: "Proforma Invoice",
-                client: "M/s Chambal Spices Pvt Ltd",
-                gstin: "23AABCC1122D1Z9",
-                address: "Maharajpura Industrial Area, Gwalior, MP",
-                phone: "9826011223",
-                items: [{ sku: "ARF-MP10", name: "Heavy Duty Double Stage Masala Pulverizer", spec: "100 Kg/hr | 10 HP Motor | SS-304", hsn: "8437", qty: 1, price: 115000 }],
-                freight: 3000,
-                gstRate: 18,
-                terms: "50% Advance against Proforma Invoice for Machine Trial & Dispatch."
-            },
-            {
-                id: 503,
-                docNo: "ARF/INV/2026/03",
-                date: "2026-10-17",
-                type: "Tax Invoice",
-                client: "M/s Kisan Agro Dehydration",
-                gstin: "24AAACK5566E1Z1",
-                address: "GIDC Metoda, Kalawad Road, Rajkot, Gujarat",
-                phone: "9925077889",
-                items: [{ sku: "ARF-TD24", name: "24-Tray Hot Air Food & Spice Dryer Oven", spec: "24 SS Trays | Digital PID Temp Control", hsn: "8419", qty: 2, price: 92000 }],
-                freight: 6000,
-                gstRate: 18,
-                terms: "100% Payment Received. Dispatched via VRL Logistics."
-            }
-        ];
-
-        let machines = JSON.parse(localStorage.getItem('arf_machines')) || defaultMachines;
-        let leads = JSON.parse(localStorage.getItem('arf_leads')) || defaultLeads;
-        let docs = JSON.parse(localStorage.getItem('arf_docs')) || defaultDocs;
+        // Clean Empty Arrays (No pre-loaded fake data)
+        let machines = JSON.parse(localStorage.getItem('arf_machines_clean')) || [];
+        let leads = JSON.parse(localStorage.getItem('arf_leads_clean')) || [];
+        let docs = JSON.parse(localStorage.getItem('arf_docs_clean')) || [];
         let currentDocFilter = 'All';
 
         function saveAll() {
-            localStorage.setItem('arf_machines', JSON.stringify(machines));
-            localStorage.setItem('arf_leads', JSON.stringify(leads));
-            localStorage.setItem('arf_docs', JSON.stringify(docs));
+            localStorage.setItem('arf_machines_clean', JSON.stringify(machines));
+            localStorage.setItem('arf_leads_clean', JSON.stringify(leads));
+            localStorage.setItem('arf_docs_clean', JSON.stringify(docs));
             updateKPIs();
         }
 
-        function resetAllData() {
-            if (confirm("Reset ARF Food Machinery ERP to sample factory data?")) {
-                machines = [...defaultMachines];
-                leads = [...defaultLeads];
-                docs = [...defaultDocs];
+        function clearAllData() {
+            if (confirm("Are you sure you want to delete all Leads, Machines, and Bills?")) {
+                machines = [];
+                leads = [];
+                docs = [];
                 saveAll();
                 renderAll();
             }
@@ -554,7 +494,7 @@
         }
 
         function calcDocTotals(doc) {
-            const subTotal = doc.items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const subTotal = doc.items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0);
             const taxable = subTotal + Number(doc.freight || 0);
             const gstAmt = Math.round(taxable * (Number(doc.gstRate || 0) / 100));
             const grandTotal = taxable + gstAmt;
@@ -563,7 +503,7 @@
 
         function updateKPIs() {
             document.getElementById('kpi-leads').innerText = leads.length;
-            const totalUnits = machines.reduce((s, m) => s + Number(m.stock), 0);
+            const totalUnits = machines.reduce((s, m) => s + Number(m.stock || 0), 0);
             document.getElementById('kpi-stock').innerText = totalUnits + ' Units';
             document.getElementById('badge-stock').innerText = machines.length;
             document.getElementById('badge-docs').innerText = docs.length;
@@ -575,7 +515,6 @@
             document.getElementById('kpi-billed').innerText = formatINR(billedValue);
         }
 
-        // Tab Switching
         function switchTab(tab) {
             ['dashboard', 'inventory', 'billing'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
@@ -609,11 +548,18 @@
                 'Order Confirmed': 'bg-emerald-50 text-emerald-700 border-emerald-200'
             };
 
-            leads.filter(l => {
+            const filtered = leads.filter(l => {
                 const mQ = l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) || l.machine.toLowerCase().includes(q);
                 const mS = status === 'All' || l.status === status;
                 return mQ && mS;
-            }).forEach(l => {
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No inquiries added yet. Click <strong>"+ Add Buyer Lead"</strong> to add your first customer inquiry.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(l => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
                         <td class="py-3.5 px-5">
@@ -646,6 +592,12 @@
         function renderInventory() {
             const tbody = document.getElementById('inventoryTableBody');
             tbody.innerHTML = '';
+
+            if (machines.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400">Inventory is empty. Click <strong>"Add Machine to Inventory"</strong> to add your food processing machines.</td></tr>`;
+                return;
+            }
+
             machines.forEach(m => {
                 const stockBadge = m.stock <= 2
                     ? `<span class="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-full font-bold text-[11px]">Low: ${m.stock} Units</span>`
@@ -697,7 +649,14 @@
                 'Tax Invoice': 'bg-emerald-50 text-emerald-700 border-emerald-200'
             };
 
-            docs.filter(d => currentDocFilter === 'All' || d.type === currentDocFilter).forEach(d => {
+            const filtered = docs.filter(d => currentDocFilter === 'All' || d.type === currentDocFilter);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No Quotations, PI, or Bills generated yet. Click <strong>"+ New Quotation / PI / Bill"</strong> above.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(d => {
                 const totals = calcDocTotals(d);
                 const itemSummary = d.items.map(i => `${i.name} (x${i.qty})`).join(', ');
 
@@ -735,7 +694,6 @@
             });
         }
 
-        // Convert Quotation -> PI -> Final Tax Invoice (Auto deducts stock on Tax Invoice)
         function convertDoc(id, targetType) {
             const orig = docs.find(d => d.id === id);
             if (!orig) return;
@@ -762,7 +720,7 @@
             previewDoc(newDoc.id);
         }
 
-        // Document Modal & Dynamic Machine Rows
+        // Document Modal & Dynamic Machine Rows (Supports both Inventory Select & Manual Entry)
         function openDocModal(defaultType = 'Quotation', prefillLead = null) {
             document.getElementById('docForm').reset();
             document.getElementById('d_type').value = defaultType;
@@ -772,33 +730,35 @@
                 document.getElementById('d_client').value = prefillLead.company || prefillLead.name;
                 document.getElementById('d_phone').value = prefillLead.phone;
                 document.getElementById('d_address').value = prefillLead.company;
+                addDocItemRow(prefillLead.machine, prefillLead.budget);
+            } else {
+                addDocItemRow();
             }
 
-            addDocItemRow();
             const m = document.getElementById('docModal');
             m.classList.remove('hidden');
             m.classList.add('flex');
         }
 
-        function addDocItemRow() {
+        function addDocItemRow(prefillName = '', prefillPrice = '') {
             const container = document.getElementById('docItemsContainer');
-            const options = machines.map(m => `<option value="${m.id}">${m.sku} - ${m.name} (${formatINR(m.price)})</option>`).join('');
+            const invOptions = `<option value="">-- Choose from Inventory (Optional) --</option>` +
+                machines.map(m => `<option value="${m.id}">${m.sku} - ${m.name} (${formatINR(m.price)})</option>`).join('');
+
             const row = document.createElement('div');
-            row.className = "grid grid-cols-12 gap-2 items-center doc-item-row";
+            row.className = "p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 doc-item-row";
             row.innerHTML = `
-                <div class="col-span-7">
-                    <select onchange="syncRowPrice(this)" class="w-full border border-slate-200 rounded-lg px-2.5 py-2 bg-white machine-select">
-                        ${options}
+                <div class="flex justify-between items-center gap-2">
+                    <select onchange="syncRowPrice(this)" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-slate-600 machine-select">
+                        ${invOptions}
                     </select>
+                    <button type="button" onclick="this.closest('.doc-item-row').remove()" class="text-rose-500 hover:text-rose-700 px-2"><i class="fa-solid fa-trash"></i></button>
                 </div>
-                <div class="col-span-2">
-                    <input type="number" value="1" min="1" placeholder="Qty" class="w-full border border-slate-200 rounded-lg px-2.5 py-2 item-qty">
-                </div>
-                <div class="col-span-2">
-                    <input type="number" value="${machines[0]?.price || 0}" class="w-full border border-slate-200 rounded-lg px-2.5 py-2 item-price">
-                </div>
-                <div class="col-span-1 text-right">
-                    <button type="button" onclick="this.closest('.doc-item-row').remove()" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                <div class="grid grid-cols-12 gap-2">
+                    <input type="text" value="${prefillName}" required placeholder="Machine Name & Model *" class="col-span-5 border border-slate-200 rounded-lg px-2.5 py-1.5 item-name">
+                    <input type="text" placeholder="Spec (e.g. 5HP SS)" class="col-span-3 border border-slate-200 rounded-lg px-2.5 py-1.5 item-spec">
+                    <input type="number" value="1" min="1" required placeholder="Qty" class="col-span-2 border border-slate-200 rounded-lg px-2.5 py-1.5 item-qty">
+                    <input type="number" value="${prefillPrice}" required placeholder="Rate (₹) *" class="col-span-2 border border-slate-200 rounded-lg px-2.5 py-1.5 item-price">
                 </div>
             `;
             container.appendChild(row);
@@ -806,8 +766,13 @@
 
         function syncRowPrice(selectEl) {
             const m = machines.find(x => x.id === Number(selectEl.value));
+            const row = selectEl.closest('.doc-item-row');
             if (m) {
-                selectEl.closest('.doc-item-row').querySelector('.item-price').value = m.price;
+                row.querySelector('.item-name').value = `${m.name} (${m.sku})`;
+                row.querySelector('.item-spec').value = m.spec;
+                row.querySelector('.item-price').value = m.price;
+                row.dataset.sku = m.sku;
+                row.dataset.hsn = m.hsn;
             }
         }
 
@@ -819,14 +784,18 @@
             const rows = document.querySelectorAll('.doc-item-row');
             const items = [];
             rows.forEach(r => {
-                const mId = Number(r.querySelector('.machine-select').value);
-                const m = machines.find(x => x.id === mId);
+                const name = r.querySelector('.item-name').value.trim();
+                const spec = r.querySelector('.item-spec').value.trim() || 'Standard Grade';
                 const qty = Number(r.querySelector('.item-qty').value || 1);
                 const price = Number(r.querySelector('.item-price').value || 0);
-                if (m) {
-                    items.push({ sku: m.sku, name: m.name, spec: m.spec, hsn: m.hsn, qty, price });
-                    if (type === 'Tax Invoice' && m.stock >= qty) {
-                        m.stock -= qty;
+                const sku = r.dataset.sku || 'ARF-MCH';
+                const hsn = r.dataset.hsn || '8438';
+
+                if (name) {
+                    items.push({ sku, name, spec, hsn, qty, price });
+                    if (type === 'Tax Invoice') {
+                        const invM = machines.find(x => x.sku === sku);
+                        if (invM && invM.stock >= qty) invM.stock -= qty;
                     }
                 }
             });
@@ -837,7 +806,7 @@
                 date: new Date().toISOString().slice(0, 10),
                 type,
                 client: document.getElementById('d_client').value.trim(),
-                gstin: document.getElementById('d_gstin').value.trim() || 'Unregistered / N/A',
+                gstin: document.getElementById('d_gstin').value.trim() || 'Unregistered',
                 address: document.getElementById('d_address').value.trim(),
                 phone: document.getElementById('d_phone').value.trim(),
                 items,
@@ -854,7 +823,6 @@
             previewDoc(newDoc.id);
         });
 
-        // Printable Official A4 Preview
         function previewDoc(id) {
             const d = docs.find(x => x.id === id);
             if (!d) return;
@@ -865,7 +833,7 @@
                     <td class="py-2.5 px-3 text-center">${idx + 1}</td>
                     <td class="py-2.5 px-3">
                         <p class="font-bold text-slate-800">${item.name}</p>
-                        <p class="text-[11px] text-slate-500">Model: ${item.sku} | Spec: ${item.spec}</p>
+                        <p class="text-[11px] text-slate-500">Spec: ${item.spec}</p>
                     </td>
                     <td class="py-2.5 px-3 text-center font-mono">${item.hsn}</td>
                     <td class="py-2.5 px-3 text-center font-bold">${item.qty} Nos</td>
@@ -876,12 +844,10 @@
 
             document.getElementById('printArea').innerHTML = `
                 <div class="border-2 border-slate-800 p-6 rounded-lg">
-                    <!-- Header -->
                     <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4">
                         <div>
                             <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">ARF FOOD PROCESSING MACHINERY</h1>
-                            <p class="text-xs text-slate-600">Manufacturers & Exporters of Commercial Food & Packaging Machines</p>
-                            <p class="text-[11px] text-slate-500 mt-1">Industrial Area, Phase-II, India | Phone: +91-9876543210 | Email: sales@arfmachines.in</p>
+                            <p class="text-xs text-slate-600">Manufacturers & Suppliers of Commercial Food Processing Machines</p>
                             <p class="text-xs font-bold text-slate-800 mt-1">GSTIN: 09AAACA1234A1Z5</p>
                         </div>
                         <div class="text-right">
@@ -891,7 +857,6 @@
                         </div>
                     </div>
 
-                    <!-- Party Details -->
                     <div class="grid grid-cols-2 gap-4 py-4 border-b border-slate-300">
                         <div>
                             <p class="text-[10px] font-bold uppercase text-slate-400">Billed / Quoted To:</p>
@@ -901,13 +866,12 @@
                             <p class="font-bold text-slate-800 mt-0.5">Party GSTIN: ${d.gstin}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] font-bold uppercase text-slate-400">Dispatch & Payment Terms:</p>
+                            <p class="text-[10px] font-bold uppercase text-slate-400">Terms & Conditions:</p>
                             <p class="text-slate-700 font-medium mt-0.5">${d.terms}</p>
-                            <p class="text-slate-500 mt-1">Warranty: 1 Year Standard Motor & Manufacturing Warranty</p>
+                            <p class="text-slate-500 mt-1">1 Year Standard Manufacturing Warranty</p>
                         </div>
                     </div>
 
-                    <!-- Line Items Table -->
                     <table class="w-full text-left border-collapse my-4">
                         <thead>
                             <tr class="bg-slate-100 border-y border-slate-300 text-[11px] font-bold uppercase text-slate-700">
@@ -922,14 +886,11 @@
                         <tbody>${rowsHTML}</tbody>
                     </table>
 
-                    <!-- Totals & Bank Box -->
                     <div class="grid grid-cols-12 gap-6 pt-3 border-t-2 border-slate-800">
                         <div class="col-span-7 space-y-1 text-[11px]">
                             <p class="font-bold text-slate-800 uppercase">Company Bank Details (For RTGS / NEFT):</p>
-                            <p>Account Name: <strong>ARF FOOD MACHINERY PVT LTD</strong></p>
-                            <p>Bank Name: <strong>HDFC Bank, Industrial Branch</strong></p>
-                            <p>Account No: <strong>50200012345678</strong> | IFSC: <strong>HDFC0001234</strong></p>
-                            <p class="text-slate-400 pt-2">Note: Subject to local jurisdiction. Goods once sold will be serviced as per warranty policy.</p>
+                            <p>Account Name: <strong>ARF FOOD MACHINERY</strong></p>
+                            <p>Account No / IFSC: <strong>As per official bank details</strong></p>
                         </div>
                         <div class="col-span-5 space-y-1.5 text-right">
                             <div class="flex justify-between"><span>Sub-Total (Machinery):</span><span class="font-semibold">${formatINR(t.subTotal)}</span></div>
@@ -941,7 +902,6 @@
                         </div>
                     </div>
 
-                    <!-- Signature -->
                     <div class="flex justify-between items-end pt-10 mt-6">
                         <p class="text-[11px] text-slate-400">Customer Acceptance Sign & Stamp</p>
                         <div class="text-right">
@@ -957,7 +917,6 @@
             m.classList.add('flex');
         }
 
-        // Helper Modals
         function openLeadModal() {
             document.getElementById('leadForm').reset();
             document.getElementById('leadModal').classList.remove('hidden');
@@ -978,7 +937,6 @@
             openDocModal('Quotation', l);
         }
 
-        // Add Lead Form Submit
         document.getElementById('leadForm').addEventListener('submit', function(e) {
             e.preventDefault();
             leads.unshift({
@@ -995,7 +953,6 @@
             renderLeads();
         });
 
-        // Add Machine Form Submit
         document.getElementById('machineForm').addEventListener('submit', function(e) {
             e.preventDefault();
             machines.unshift({

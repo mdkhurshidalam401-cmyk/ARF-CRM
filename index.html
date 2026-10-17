@@ -687,7 +687,7 @@
             previewDoc(newDoc.id);
         }
 
-        function openDocModal(defaultType = 'Quotation', prefillLead = null) {
+        function openDocModal(defaultType = 'Proforma Invoice', prefillLead = null) {
             document.getElementById('docForm').reset();
             document.getElementById('d_type').value = defaultType;
             document.getElementById('docItemsContainer').innerHTML = '';
@@ -763,6 +763,11 @@
                 }
             });
 
+            if (items.length === 0) {
+                alert("Please add at least one machine item.");
+                return;
+            }
+
             const newDoc = {
                 id: Date.now(),
                 docNo: prefixMap[type] + Math.floor(100 + Math.random() * 900),
@@ -810,44 +815,44 @@
                     <div class="border-2 border-slate-900 p-6 rounded bg-white relative page-break">
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                             <div>
-                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
-                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
-                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
+                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837[cite: 2]</p>
+                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 2]</h1>
+                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment[cite: 2]</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888</p>
-                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV</p>
+                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888[cite: 2]</p>
+                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV[cite: 2]</p>
                             </div>
                         </div>
 
                         <div class="bg-red-700 text-white text-center font-extrabold text-sm py-1.5 my-3 uppercase tracking-widest rounded-xs">
-                            ${d.type}
+                            ${d.type}[cite: 2]
                         </div>
 
                         <div class="grid grid-cols-3 border-2 border-slate-900 py-2 text-center font-bold bg-slate-50 text-[11px] mb-3">
-                            <div class="border-r border-slate-900">DATE: <span class="font-normal">${d.date}</span></div>
-                            <div class="border-r border-slate-900">SUBJECT: <span class="font-normal">${d.subject || 'MAKHANA PROCESSING MACHINERY'}</span></div>
-                            <div>${d.type === 'Proforma Invoice' ? 'PI NO.' : d.type === 'Quotation' ? 'QUOTATION NO.' : 'INVOICE NO.'}: <span class="font-normal">${d.docNo}</span></div>
+                            <div class="border-r border-slate-900">DATE: <span class="font-normal">${d.date}</span>[cite: 2]</div>
+                            <div class="border-r border-slate-900">SUBJECT: <span class="font-normal">${d.subject || 'MAKHANA PROCESSING MACHINERY'}</span>[cite: 2]</div>
+                            <div>${d.type === 'Proforma Invoice' ? 'PI NO.' : d.type === 'Quotation' ? 'QUOTATION NO.' : 'INVOICE NO.'}: <span class="font-normal">${d.docNo}</span>[cite: 2]</div>
                         </div>
 
                         <div class="border-2 border-slate-900 mb-3 bg-white">
-                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">BUYER DETAILS (BILL TO)</div>
+                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">BUYER DETAILS (BILL TO)[cite: 2]</div>
                             <div class="p-2.5 space-y-1.5">
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BUYER NAME</span><span class="col-span-3 font-semibold">${d.client}</span></div>
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">ADDRESS</span><span class="col-span-3">${d.address}</span></div>
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">GSTIN / CONTACT</span><span class="col-span-3">${d.gstin} | Ph: ${d.phone}</span></div>
-                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">PLACE OF SUPPLY</span><span class="col-span-3">Uttar Pradesh (09)</span></div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BUYER NAME</span><span class="col-span-3 font-semibold">${d.client}</span>[cite: 2]</div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">ADDRESS</span><span class="col-span-3">${d.address}</span>[cite: 2]</div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">GSTIN / CONTACT</span><span class="col-span-3">${d.gstin} | Ph: ${d.phone}</span>[cite: 2]</div>
+                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">PLACE OF SUPPLY</span><span class="col-span-3">Uttar Pradesh (09)</span>[cite: 2]</div>
                             </div>
                         </div>
 
                         <table class="w-full text-left border-collapse border-2 border-slate-900 mb-3">
                             <thead>
                                 <tr class="bg-slate-900 text-white text-[11px] font-bold uppercase">
-                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-12">SR NO</th>
-                                    <th class="py-2.5 px-3 border-r border-slate-700 w-1/3">MACHINE NAME</th>
-                                    <th class="py-2.5 px-3 border-r border-slate-700">SPECIFICATIONS</th>
-                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-16">QTY</th>
-                                    <th class="py-2.5 px-3 text-right w-28">PRICE (₹)</th>
+                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-12">SR NO[cite: 2]</th>
+                                    <th class="py-2.5 px-3 border-r border-slate-700 w-1/3">MACHINE NAME[cite: 2]</th>
+                                    <th class="py-2.5 px-3 border-r border-slate-700">SPECIFICATIONS[cite: 2]</th>
+                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-16">QTY[cite: 2]</th>
+                                    <th class="py-2.5 px-3 text-right w-28">PRICE (₹)[cite: 2]</th>
                                 </tr>
                             </thead>
                             <tbody>${rowsHTML}</tbody>
@@ -855,34 +860,34 @@
 
                         <div class="border-2 border-slate-900 mb-3 p-3 bg-slate-50 flex justify-end">
                             <div class="w-80 space-y-1.5 text-right">
-                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>MACHINE VALUE</span> <span>${formatINR(t.subTotal)}</span></div>
-                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>GST @ ${d.gstRate}%</span> <span>${formatINR(t.gstAmt)}</span></div>
+                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>MACHINE VALUE[cite: 2]</span> <span>${formatINR(t.subTotal)}</span></div>
+                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>GST @ ${d.gstRate}%[cite: 2]</span> <span>${formatINR(t.gstAmt)}</span></div>
                                 ${d.freight > 0 ? `<div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>FREIGHT / PACKING</span> <span>${formatINR(d.freight)}</span></div>` : ''}
-                                <div class="flex justify-between py-1 text-sm font-extrabold text-red-700 bg-red-50 px-2 rounded"><span>TOTAL PAYABLE (₹)</span> <span>${formatINR(t.grandTotal)}</span></div>
+                                <div class="flex justify-between py-1 text-sm font-extrabold text-red-700 bg-red-50 px-2 rounded"><span>TOTAL PAYABLE (₹)[cite: 2]</span> <span>${formatINR(t.grandTotal)}</span></div>
                             </div>
                         </div>
 
                         <div class="border-2 border-slate-900 p-2.5 mb-3 bg-white">
-                            <p class="font-bold text-[10px] text-slate-600 uppercase">AMOUNT IN WORDS:</p>
-                            <p class="italic font-semibold text-slate-800 mt-0.5">Rupees Only</p>
+                            <p class="font-bold text-[10px] text-slate-600 uppercase">AMOUNT IN WORDS[cite: 2]:</p>
+                            <p class="italic font-semibold text-slate-800 mt-0.5">Rupees Only[cite: 2]</p>
                         </div>
 
                         <div class="border-2 border-slate-900 mb-4">
-                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">CURRENT ACCOUNT DETAILS</div>
+                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">CURRENT ACCOUNT DETAILS[cite: 2]</div>
                             <div class="p-2.5 space-y-1 text-[11px]">
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BANK NAME</span><span class="col-span-3 font-bold">YES BANK LTD</span></div>
-                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">ACCOUNT NO.</span><span class="col-span-3 font-mono font-bold">128861900001527</span></div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BANK NAME</span><span class="col-span-3 font-bold">YES BANK LTD[cite: 2, 3]</span></div>
+                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">ACCOUNT NO.</span><span class="col-span-3 font-mono font-bold">128861900001527[cite: 2, 3]</span></div>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-end pt-2 text-[9px] text-slate-600 border-t border-slate-300">
                             <div>
-                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993</p>
-                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863</p>
-                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301</p>
-                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company</p>
+                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993[cite: 2]</p>
+                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863[cite: 2]</p>
+                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301[cite: 2]</p>
+                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company[cite: 2]</p>
                             </div>
-                            <div class="text-right font-bold text-[9px]">Page 1 of 3</div>
+                            <div class="text-right font-bold text-[9px]">Page 1 of 3[cite: 2]</div>
                         </div>
                     </div>
 
@@ -891,34 +896,34 @@
                     <div class="border-2 border-slate-900 p-6 rounded bg-white relative page-break mt-6">
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                             <div>
-                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
-                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
-                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
+                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837[cite: 3]</p>
+                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 3]</h1>
+                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment[cite: 3]</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888</p>
-                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV</p>
+                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888[cite: 3]</p>
+                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV[cite: 3]</p>
                             </div>
                         </div>
 
                         <div class="my-6">
                             <div class="border-2 border-slate-900">
-                                <div class="bg-slate-900 text-white px-3 py-1.5 font-bold uppercase text-[11px]">ACCOUNT HOLDER & IFSC DETAILS</div>
+                                <div class="bg-slate-900 text-white px-3 py-1.5 font-bold uppercase text-[11px]">ACCOUNT HOLDER & IFSC DETAILS[cite: 3]</div>
                                 <div class="p-4 space-y-2 text-xs">
-                                    <div class="grid grid-cols-4 border-b border-slate-200 pb-2"><span class="font-bold text-red-700">ACCOUNT HOLDER NAME</span><span class="col-span-3 font-bold">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</span></div>
-                                    <div class="grid grid-cols-4"><span class="font-bold text-red-700">IFS CODE</span><span class="col-span-3 font-mono font-bold">YESB0001288</span></div>
+                                    <div class="grid grid-cols-4 border-b border-slate-200 pb-2"><span class="font-bold text-red-700">ACCOUNT HOLDER NAME</span><span class="col-span-3 font-bold">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 3]</span></div>
+                                    <div class="grid grid-cols-4"><span class="font-bold text-red-700">IFS CODE</span><span class="col-span-3 font-mono font-bold">YESB0001288[cite: 3]</span></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-end pt-32 text-[9px] text-slate-600 border-t border-slate-300">
                             <div>
-                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993</p>
-                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863</p>
-                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301</p>
-                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company</p>
+                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993[cite: 3]</p>
+                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863[cite: 3]</p>
+                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301[cite: 3]</p>
+                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company[cite: 3]</p>
                             </div>
-                            <div class="text-right font-bold text-[9px]">Page 2 of 3</div>
+                            <div class="text-right font-bold text-[9px]">Page 2 of 3[cite: 3]</div>
                         </div>
                     </div>
 
@@ -927,54 +932,54 @@
                     <div class="border-2 border-slate-900 p-6 rounded bg-white relative page-break mt-6">
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                             <div>
-                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
-                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
-                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
+                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837[cite: 4]</p>
+                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 4]</h1>
+                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment[cite: 4]</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888</p>
-                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV</p>
+                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888[cite: 4]</p>
+                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV[cite: 4]</p>
                             </div>
                         </div>
 
                         <div class="my-4">
-                            <div class="bg-red-700 text-white font-extrabold text-xs py-1.5 px-3 uppercase tracking-wider mb-3">TERMS & CONDITIONS</div>
+                            <div class="bg-red-700 text-white font-extrabold text-xs py-1.5 px-3 uppercase tracking-wider mb-3">TERMS & CONDITIONS[cite: 4]</div>
                             <div class="space-y-2 text-[11px] text-slate-800">
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">1.</span><span>Delivery within 15–20 working days.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">2.</span><span>Payment terms: 70% advance against purchase order, 20% at the time of dispatch, and the remaining 10% after installation.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">3.</span><span>This proforma invoice is valid for 7 days. It is not a tax invoice; a GST tax invoice will be issued at the time of dispatch.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">4.</span><span>The order can be cancelled only within 24 hours of placing it. If cancelled after 24 hours, 20% of the advance will be deducted.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">5.</span><span>The buyer will have to pay the transport charges.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">6.</span><span>Installation: the buyer must make available in advance all materials required — electrical power, lighting, heating, earthing, water, drainage, and material-handling arrangements.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">7.</span><span>If the buyer does not make full payment after machine installation, the supplier may take legal action.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">8.</span><span>For the first installation, the buyer will pay ₹1,000 per day towards travel, lodging and food for our technical person.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">9.</span><span>The company shall not pay any interest or damages for non-delivery due to reasons beyond its control.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">10.</span><span>Warranty: 12 months from the date of dispatch on all mechanical parts and motors.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">11.</span><span>The buyer must inform the technical department about installation within 10 days after delivery and clear the remaining 10% amount.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">12.</span><span>Duties & taxes will be extra, as applicable at the time of dispatch.</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">13.</span><span>If the installation site is more than 500 km away, the buyer must bear round-trip flight tickets for the executive.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">1.</span><span>Delivery within 15–20 working days.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">2.</span><span>Payment terms: 70% advance against purchase order, 20% at the time of dispatch, and the remaining 10% after installation.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">3.</span><span>This proforma invoice is valid for 7 days. It is not a tax invoice; a GST tax invoice will be issued at the time of dispatch.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">4.</span><span>The order can be cancelled only within 24 hours of placing it. If cancelled after 24 hours, 20% of the advance will be deducted.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">5.</span><span>The buyer will have to pay the transport charges.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">6.</span><span>Installation: the buyer must make available in advance all materials required — electrical power, lighting, heating, earthing, water, drainage, and material-handling arrangements.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">7.</span><span>If the buyer does not make full payment after machine installation, the supplier may take legal action.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">8.</span><span>For the first installation, the buyer will pay ₹1,000 per day towards travel, lodging and food for our technical person.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">9.</span><span>The company shall not pay any interest or damages for non-delivery due to reasons beyond its control.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">10.</span><span>Warranty: 12 months from the date of dispatch on all mechanical parts and motors.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">11.</span><span>The buyer must inform the technical department about installation within 10 days after delivery and clear the remaining 10% amount.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">12.</span><span>Duties & taxes will be extra, as applicable at the time of dispatch.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">13.</span><span>If the installation site is more than 500 km away, the buyer must bear round-trip flight tickets for the executive.[cite: 4]</span></div>
                             </div>
                         </div>
 
                         <div class="pt-4 flex justify-between items-end">
                             <div>
-                                <p class="font-medium text-slate-700">Thanking you,</p>
-                                <p class="font-bold text-slate-900 mt-1">For ARF FOOD PROCESSING & PACKAGING INDUSTRIES</p>
+                                <p class="font-medium text-slate-700">Thanking you,[cite: 4]</p>
+                                <p class="font-bold text-slate-900 mt-1">For ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 4]</p>
                             </div>
                             <div class="text-right">
                                 <div class="h-10"></div>
-                                <p class="font-semibold text-slate-800 border-t border-slate-900 pt-1">Authorised Signatory</p>
+                                <p class="font-semibold text-slate-800 border-t border-slate-900 pt-1">Authorised Signatory[cite: 4]</p>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-end pt-12 text-[9px] text-slate-600 border-t border-slate-300">
                             <div>
-                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993</p>
-                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863</p>
-                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301</p>
-                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company</p>
+                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993[cite: 4]</p>
+                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863[cite: 4]</p>
+                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301[cite: 4]</p>
+                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company[cite: 4]</p>
                             </div>
-                            <div class="text-right font-bold text-[9px]">Page 3 of 3</div>
+                            <div class="text-right font-bold text-[9px]">Page 3 of 3[cite: 4]</div>
                         </div>
                     </div>
 

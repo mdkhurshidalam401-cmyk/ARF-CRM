@@ -1,0 +1,37 @@
+type Project @table {
+  name: String!
+  firebaseProjectId: String!
+  region: String
+  description: String
+}
+
+type Environment @table {
+  name: String!
+  project: Project!
+  isActive: Boolean
+  configurationSnapshot: String
+}
+
+type Developer @table {
+  email: String!
+  displayName: String!
+  role: String
+  githubUsername: String
+}
+
+type Deployment @table {
+  environment: Environment!
+  status: String!
+  deployedAt: Timestamp!
+  deployedBy: Developer!
+  versionTag: String
+  commitHash: String
+  releaseNotes: String
+}
+
+type DeploymentLog @table {
+  deployment: Deployment!
+  logMessage: String!
+  severity: String!
+  timestamp: Timestamp
+}

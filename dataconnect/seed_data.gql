@@ -1,0 +1,106 @@
+mutation CreateSeedData @transaction {
+  project_insertMany(data: [
+    {
+      name: "Alpha Project",
+      firebaseProjectId: "alpha-123",
+      region: "us-central1",
+      description: "Primary backend service"
+    },
+    {
+      name: "Beta Project",
+      firebaseProjectId: "beta-456",
+      region: "europe-west1",
+      description: "Analytics dashboard"
+    },
+    {
+      name: "Gamma Project",
+      firebaseProjectId: "gamma-789",
+      region: "asia-northeast1",
+      description: "Mobile API"
+    }
+  ])
+  
+  environment_insertMany(data: [
+    {
+      name: "Production",
+      project: { id: "00000000-0000-0000-0000-000000000001" },
+      isActive: true,
+      configurationSnapshot: "{'debug': false}"
+    },
+    {
+      name: "Staging",
+      project: { id: "00000000-0000-0000-0000-000000000002" },
+      isActive: true,
+      configurationSnapshot: "{'debug': true}"
+    },
+    {
+      name: "Development",
+      project: { id: "00000000-0000-0000-0000-000000000003" },
+      isActive: false,
+      configurationSnapshot: "{'debug': true}"
+    }
+  ])
+
+  developer_insertMany(data: [
+    {
+      email: "alice@example.com",
+      displayName: "Alice Dev",
+      role: "Lead",
+      githubUsername: "alice-dev"
+    },
+    {
+      email: "bob@example.com",
+      displayName: "Bob Coder",
+      role: "Junior",
+      githubUsername: "bob-coder"
+    },
+    {
+      email: "charlie@example.com",
+      displayName: "Charlie QA",
+      role: "QA",
+      githubUsername: "charlie-qa"
+    }
+  ])
+
+  deployment_insertMany(data: [
+    {
+      environment: { id: "00000000-0000-0000-0000-000000000001" },
+      status: "SUCCESS",
+      deployedAt: "2023-10-27T10:00:00Z",
+      deployedBy: { id: "00000000-0000-0000-0000-000000000001" },
+      versionTag: "v1.0.0",
+      commitHash: "a1b2c3d4",
+      releaseNotes: "Initial production release"
+    },
+    {
+      environment: { id: "00000000-0000-0000-0000-000000000002" },
+      status: "SUCCESS",
+      deployedAt: "2023-10-26T15:00:00Z",
+      deployedBy: { id: "00000000-0000-0000-0000-000000000002" },
+      versionTag: "v0.9.0",
+      commitHash: "e5f6g7h8",
+      releaseNotes: "Staging sanity check"
+    }
+  ])
+
+  deploymentLog_insertMany(data: [
+    {
+      deployment: { id: "00000000-0000-0000-0000-000000000001" },
+      logMessage: "Starting container deployment",
+      severity: "INFO",
+      timestamp: "2023-10-27T10:00:05Z"
+    },
+    {
+      deployment: { id: "00000000-0000-0000-0000-000000000001" },
+      logMessage: "Database migration complete",
+      severity: "INFO",
+      timestamp: "2023-10-27T10:00:10Z"
+    },
+    {
+      deployment: { id: "00000000-0000-0000-0000-000000000002" },
+      logMessage: "Connection timeout to redis",
+      severity: "WARN",
+      timestamp: "2023-10-26T15:00:15Z"
+    }
+  ])
+}

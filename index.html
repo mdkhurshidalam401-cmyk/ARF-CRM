@@ -7,6 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase App & Firestore SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -64,6 +69,9 @@
                 <button onclick="openDocModal('Proforma Invoice')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition border border-slate-700/60">
                     <i class="fa-solid fa-file-contract text-amber-400"></i> + New Proforma (PI)
                 </button>
+                <button onclick="openDocModal('Delivery Challan')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition border border-slate-700/60">
+                    <i class="fa-solid fa-truck-fast text-purple-400"></i> + Delivery Challan
+                </button>
                 <button onclick="openDocModal('Tax Invoice')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs font-medium transition border border-slate-700/60">
                     <i class="fa-solid fa-receipt text-emerald-400"></i> + New GST Bill
                 </button>
@@ -73,11 +81,8 @@
         <div class="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
             <div>
                 <p class="text-xs font-bold text-white">ARF Industries</p>
-                <p class="text-[10px] text-slate-400">GSTIN: 09LHAPK3181L1ZV</p>
+                <p class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-cloud"></i> Cloud Sync Active</p>
             </div>
-            <button onclick="clearAllData()" title="Clear All Data" class="text-slate-500 hover:text-rose-400 p-1.5 text-xs">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
         </div>
     </aside>
 
@@ -87,8 +92,8 @@
         <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <h1 id="pageTitle" class="text-lg font-bold text-slate-800">Machinery Sales & Leads CRM</h1>
-                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-700 border border-orange-200">
-                    <i class="fa-solid fa-industry text-[10px]"></i> ISO 9001:2015 Certified
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-cloud text-[10px]"></i> Firebase Connected
                 </span>
             </div>
 
@@ -223,12 +228,14 @@
                         <button onclick="filterDocs('All')" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold">All Documents</button>
                         <button onclick="filterDocs('Quotation')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold">Quotations</button>
                         <button onclick="filterDocs('Proforma Invoice')" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold">Proforma Invoices</button>
+                        <button onclick="filterDocs('Delivery Challan')" class="px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-semibold">Challans</button>
                         <button onclick="filterDocs('Tax Invoice')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold">Tax Bills</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="openDocModal('Quotation')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold">+ New Quotation</button>
-                        <button onclick="openDocModal('Proforma Invoice')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold">+ New PI</button>
-                        <button onclick="openDocModal('Tax Invoice')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold">+ New GST Bill</button>
+                        <button onclick="openDocModal('Quotation')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold">+ Quotation</button>
+                        <button onclick="openDocModal('Proforma Invoice')" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold">+ PI</button>
+                        <button onclick="openDocModal('Delivery Challan')" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold">+ Challan</button>
+                        <button onclick="openDocModal('Tax Invoice')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold">+ GST Bill</button>
                     </div>
                 </div>
 
@@ -373,6 +380,7 @@
                         <select id="d_type" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800">
                             <option value="Quotation">Quotation</option>
                             <option value="Proforma Invoice" selected>Proforma Invoice (PI)</option>
+                            <option value="Delivery Challan">Delivery Challan</option>
                             <option value="Tax Invoice">Tax Invoice (Final Bill)</option>
                         </select>
                     </div>
@@ -427,7 +435,7 @@
 
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('docModal')" class="px-4 py-2 border rounded-xl">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-semibold rounded-xl shadow-sm">Generate Official PDF</button>
+                    <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-semibold rounded-xl shadow-sm">Generate Document</button>
                 </div>
             </form>
         </div>
@@ -449,33 +457,51 @@
         </div>
     </div>
 
-    <!-- SCRIPT -->
+    <!-- FIREBASE CLOUD SYNC SCRIPT -->
     <script>
-        let machines = JSON.parse(localStorage.getItem('arf_machines_clean')) || [];
-        let leads = JSON.parse(localStorage.getItem('arf_leads_clean')) || [];
-        let docs = JSON.parse(localStorage.getItem('arf_docs_clean')) || [];
+        // Yahan aapka Firebase configuration set kar diya gaya hai
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-KxlB7VVzxDun8SGHVGBGhGjGuckwI0Y",
+            authDomain: "arf-crm-75bdf.firebaseapp.com",
+            projectId: "arf-crm-75bdf",
+            storageBucket: "arf-crm-75bdf.firebasestorage.app",
+            messagingSenderId: "603612260729",
+            appId: "1:603612260729:web:122cd358e0a3b318d184eb"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let machines = [];
+        let leads = [];
+        let docs = [];
         let currentDocFilter = 'All';
 
-        function saveAll() {
-            localStorage.setItem('arf_machines_clean', JSON.stringify(machines));
-            localStorage.setItem('arf_leads_clean', JSON.stringify(leads));
-            localStorage.setItem('arf_docs_clean', JSON.stringify(docs));
+        // Real-time synchronization with Firestore Cloud
+        db.collection("machines").onSnapshot(snapshot => {
+            machines = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderInventory();
             updateKPIs();
-        }
+        });
 
-        function clearAllData() {
-            if (confirm("Delete all data?")) {
-                machines = []; leads = []; docs = [];
-                saveAll(); renderAll();
-            }
-        }
+        db.collection("leads").onSnapshot(snapshot => {
+            leads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderLeads();
+            updateKPIs();
+        });
+
+        db.collection("docs").onSnapshot(snapshot => {
+            docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderDocs();
+            updateKPIs();
+        });
 
         function formatINR(n) {
             return '₹' + Number(n || 0).toLocaleString('en-IN');
         }
 
         function calcDocTotals(doc) {
-            const subTotal = doc.items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0);
+            const subTotal = (doc.items || []).reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0);
             const taxable = subTotal + Number(doc.freight || 0);
             const gstAmt = Math.round(taxable * (Number(doc.gstRate || 0) / 100));
             const grandTotal = taxable + gstAmt;
@@ -510,7 +536,7 @@
             const titles = {
                 dashboard: "Machinery Sales & Leads CRM",
                 inventory: "Food Processing Machinery Inventory",
-                billing: "Quotations, Proforma Invoices & GST Bills"
+                billing: "Quotations, Proforma Invoices, Challans & Bills"
             };
             document.getElementById('pageTitle').innerText = titles[tab];
         }
@@ -535,7 +561,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No inquiries added yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No inquiries found in cloud database.</td></tr>`;
                 return;
             }
 
@@ -546,22 +572,17 @@
                             <p class="font-bold text-slate-800">${l.name}</p>
                             <p class="text-[11px] text-slate-400">${l.company}</p>
                         </td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex items-center gap-1.5">
-                                <a href="https://wa.me/91${l.phone.replace(/\D/g,'')}" target="_blank" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white flex items-center justify-center"><i class="fa-brands fa-whatsapp"></i></a>
-                                <span>${l.phone}</span>
-                            </div>
-                        </td>
+                        <td class="py-3.5 px-4">${l.phone}</td>
                         <td class="py-3.5 px-4 font-semibold text-slate-700">${l.machine}</td>
                         <td class="py-3.5 px-4 font-bold">${formatINR(l.budget)}</td>
                         <td class="py-3.5 px-4">
                             <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColors[l.status] || badgeColors['New Inquiry']}">${l.status}</span>
                         </td>
                         <td class="py-3.5 px-5 text-right space-x-1">
-                            <button onclick="quickQuoteFromLead(${l.id})" class="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg font-semibold text-[11px]">
+                            <button onclick="quickQuoteFromLead('${l.id}')" class="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg font-semibold text-[11px]">
                                 <i class="fa-solid fa-file-invoice mr-1"></i> Make Quote/PI
                             </button>
-                            <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="deleteCloudDoc('leads', '${l.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -573,7 +594,7 @@
             tbody.innerHTML = '';
 
             if (machines.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400">Inventory is empty.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400">Inventory is empty in cloud.</td></tr>`;
                 return;
             }
 
@@ -590,21 +611,20 @@
                         <td class="py-3.5 px-4 font-bold text-slate-800">${formatINR(m.price)}</td>
                         <td class="py-3.5 px-4"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">${m.stock} Units Ready</span></td>
                         <td class="py-3.5 px-5 text-right space-x-1">
-                            <button onclick="adjustStock(${m.id}, 1)" class="px-2 py-1 bg-slate-100 rounded font-bold">+</button>
-                            <button onclick="adjustStock(${m.id}, -1)" class="px-2 py-1 bg-slate-100 rounded font-bold">-</button>
-                            <button onclick="deleteMachine(${m.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="adjustStockCloud('${m.id}', 1)" class="px-2 py-1 bg-slate-100 rounded font-bold">+</button>
+                            <button onclick="adjustStockCloud('${m.id}', -1)" class="px-2 py-1 bg-slate-100 rounded font-bold">-</button>
+                            <button onclick="deleteCloudDoc('machines', '${m.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function adjustStock(id, delta) {
+        function adjustStockCloud(id, delta) {
             const m = machines.find(x => x.id === id);
             if (m) {
-                m.stock = Math.max(0, Number(m.stock) + delta);
-                saveAll();
-                renderInventory();
+                const newStock = Math.max(0, Number(m.stock) + delta);
+                db.collection("machines").doc(id).update({ stock: newStock });
             }
         }
 
@@ -620,25 +640,26 @@
             const typeStyles = {
                 'Quotation': 'bg-blue-50 text-blue-700 border-blue-200',
                 'Proforma Invoice': 'bg-amber-50 text-amber-700 border-amber-200',
+                'Delivery Challan': 'bg-purple-50 text-purple-700 border-purple-200',
                 'Tax Invoice': 'bg-emerald-50 text-emerald-700 border-emerald-200'
             };
 
             const filtered = docs.filter(d => currentDocFilter === 'All' || d.type === currentDocFilter);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No documents generated yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-400">No documents found in cloud database.</td></tr>`;
                 return;
             }
 
             filtered.forEach(d => {
                 const totals = calcDocTotals(d);
-                const itemSummary = d.items.map(i => `${i.name} (x${i.qty})`).join(', ');
+                const itemSummary = (d.items || []).map(i => `${i.name} (x${i.qty})`).join(', ');
 
                 let convertBtn = '';
                 if (d.type === 'Quotation') {
-                    convertBtn = `<button onclick="convertDoc(${d.id}, 'Proforma Invoice')" class="px-2.5 py-1 bg-amber-50 text-amber-700 border rounded-lg font-semibold text-[11px]">➔ Make PI</button>`;
+                    convertBtn = `<button onclick="convertDoc('${d.id}', 'Proforma Invoice')" class="px-2.5 py-1 bg-amber-50 text-amber-700 border rounded-lg font-semibold text-[11px]">➔ Make PI</button>`;
                 } else if (d.type === 'Proforma Invoice') {
-                    convertBtn = `<button onclick="convertDoc(${d.id}, 'Tax Invoice')" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border rounded-lg font-semibold text-[11px]">➔ Make Bill</button>`;
+                    convertBtn = `<button onclick="convertDoc('${d.id}', 'Tax Invoice')" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border rounded-lg font-semibold text-[11px]">➔ Make Bill</button>`;
                 }
 
                 tbody.innerHTML += `
@@ -656,8 +677,8 @@
                         <td class="py-3.5 px-4 font-extrabold text-slate-900">${formatINR(totals.grandTotal)}</td>
                         <td class="py-3.5 px-5 text-right space-x-1">
                             ${convertBtn}
-                            <button onclick="previewDoc(${d.id})" class="px-2.5 py-1 bg-slate-900 text-white rounded-lg font-semibold text-[11px]"><i class="fa-solid fa-print mr-1"></i> Print</button>
-                            <button onclick="deleteDoc(${d.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="previewDoc('${d.id}')" class="px-2.5 py-1 bg-slate-900 text-white rounded-lg font-semibold text-[11px]"><i class="fa-solid fa-print mr-1"></i> Print</button>
+                            <button onclick="deleteCloudDoc('docs', '${d.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -669,22 +690,14 @@
             if (!orig) return;
             const prefix = targetType === 'Proforma Invoice' ? 'ARF/PI/26-27/' : 'ARF/INV/26-27/';
             const newDoc = JSON.parse(JSON.stringify(orig));
-            newDoc.id = Date.now();
+            delete newDoc.id;
             newDoc.type = targetType;
             newDoc.date = new Date().toISOString().slice(0, 10);
             newDoc.docNo = prefix + Math.floor(100 + Math.random() * 900);
 
-            if (targetType === 'Tax Invoice') {
-                newDoc.items.forEach(item => {
-                    const invM = machines.find(m => m.sku === item.sku);
-                    if (invM && invM.stock >= item.qty) invM.stock -= item.qty;
-                });
-            }
-
-            docs.unshift(newDoc);
-            saveAll();
-            renderAll();
-            previewDoc(newDoc.id);
+            db.collection("docs").add(newDoc).then((ref) => {
+                previewDoc(ref.id);
+            });
         }
 
         function openDocModal(defaultType = 'Proforma Invoice', prefillLead = null) {
@@ -728,21 +741,26 @@
         }
 
         function syncRowPrice(selectEl) {
-            const m = machines.find(x => x.id === Number(selectEl.value));
+            const m = machines.find(x => x.id === selectEl.value);
             const row = selectEl.closest('.doc-item-row');
             if (m) {
                 row.querySelector('.item-name').value = `${m.name} (${m.sku})`;
                 row.querySelector('.item-spec').value = m.spec;
                 row.querySelector('.item-price').value = m.price;
                 row.dataset.sku = m.sku;
-                row.dataset.hsn = m.hsn;
+                row.dataset.hsn = m.hsn || '8438';
             }
         }
 
         document.getElementById('docForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const type = document.getElementById('d_type').value;
-            const prefixMap = { 'Quotation': 'ARF/QTN/26-27/', 'Proforma Invoice': 'ARF/PI/26-27/', 'Tax Invoice': 'ARF/INV/26-27/' };
+            const prefixMap = { 
+                'Quotation': 'ARF/QTN/26-27/', 
+                'Proforma Invoice': 'ARF/PI/26-27/', 
+                'Delivery Challan': 'ARF/DC/26-27/', 
+                'Tax Invoice': 'ARF/INV/26-27/' 
+            };
 
             const rows = document.querySelectorAll('.doc-item-row');
             const items = [];
@@ -756,10 +774,6 @@
 
                 if (name) {
                     items.push({ sku, name, spec, hsn, qty, price });
-                    if (type === 'Tax Invoice') {
-                        const invM = machines.find(x => x.sku === sku);
-                        if (invM && invM.stock >= qty) invM.stock -= qty;
-                    }
                 }
             });
 
@@ -769,7 +783,6 @@
             }
 
             const newDoc = {
-                id: Date.now(),
                 docNo: prefixMap[type] + Math.floor(100 + Math.random() * 900),
                 date: new Date().toISOString().slice(0, 10),
                 type,
@@ -784,12 +797,11 @@
                 terms: document.getElementById('d_terms').value.trim()
             };
 
-            docs.unshift(newDoc);
-            saveAll();
-            closeModal('docModal');
-            switchTab('billing');
-            renderAll();
-            previewDoc(newDoc.id);
+            db.collection("docs").add(newDoc).then((ref) => {
+                closeModal('docModal');
+                switchTab('billing');
+                previewDoc(ref.id);
+            });
         });
 
         // OFFICIAL 3-PAGE EXACT ARF PROFORMA INVOICE FORMAT
@@ -798,7 +810,7 @@
             if (!d) return;
             const t = calcDocTotals(d);
 
-            const rowsHTML = d.items.map((item, idx) => `
+            const rowsHTML = (d.items || []).map((item, idx) => `
                 <tr class="border-b border-slate-900">
                     <td class="py-3 px-3 text-center border-r border-slate-900 font-bold">${idx + 1}</td>
                     <td class="py-3 px-3 border-r border-slate-900 font-bold text-slate-900">${item.name}</td>
@@ -815,44 +827,44 @@
                     <div class="border-2 border-slate-900 p-6 rounded bg-white relative page-break">
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                             <div>
-                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837[cite: 2]</p>
-                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 2]</h1>
-                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment[cite: 2]</p>
+                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
+                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
+                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888[cite: 2]</p>
-                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV[cite: 2]</p>
+                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888</p>
+                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV</p>
                             </div>
                         </div>
 
                         <div class="bg-red-700 text-white text-center font-extrabold text-sm py-1.5 my-3 uppercase tracking-widest rounded-xs">
-                            ${d.type}[cite: 2]
+                            ${d.type}
                         </div>
 
                         <div class="grid grid-cols-3 border-2 border-slate-900 py-2 text-center font-bold bg-slate-50 text-[11px] mb-3">
-                            <div class="border-r border-slate-900">DATE: <span class="font-normal">${d.date}</span>[cite: 2]</div>
-                            <div class="border-r border-slate-900">SUBJECT: <span class="font-normal">${d.subject || 'MAKHANA PROCESSING MACHINERY'}</span>[cite: 2]</div>
-                            <div>${d.type === 'Proforma Invoice' ? 'PI NO.' : d.type === 'Quotation' ? 'QUOTATION NO.' : 'INVOICE NO.'}: <span class="font-normal">${d.docNo}</span>[cite: 2]</div>
+                            <div class="border-r border-slate-900">DATE: <span class="font-normal">${d.date}</span></div>
+                            <div class="border-r border-slate-900">SUBJECT: <span class="font-normal">${d.subject || 'MAKHANA PROCESSING MACHINERY'}</span></div>
+                            <div>${d.type === 'Proforma Invoice' ? 'PI NO.' : d.type === 'Quotation' ? 'QUOTATION NO.' : d.type === 'Delivery Challan' ? 'CHALLAN NO.' : 'INVOICE NO.'}: <span class="font-normal">${d.docNo}</span></div>
                         </div>
 
                         <div class="border-2 border-slate-900 mb-3 bg-white">
-                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">BUYER DETAILS (BILL TO)[cite: 2]</div>
+                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">BUYER DETAILS (BILL TO)</div>
                             <div class="p-2.5 space-y-1.5">
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BUYER NAME</span><span class="col-span-3 font-semibold">${d.client}</span>[cite: 2]</div>
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">ADDRESS</span><span class="col-span-3">${d.address}</span>[cite: 2]</div>
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">GSTIN / CONTACT</span><span class="col-span-3">${d.gstin} | Ph: ${d.phone}</span>[cite: 2]</div>
-                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">PLACE OF SUPPLY</span><span class="col-span-3">Uttar Pradesh (09)</span>[cite: 2]</div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BUYER NAME</span><span class="col-span-3 font-semibold">${d.client}</span></div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">ADDRESS</span><span class="col-span-3">${d.address}</span></div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">GSTIN / CONTACT</span><span class="col-span-3">${d.gstin} | Ph: ${d.phone}</span></div>
+                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">PLACE OF SUPPLY</span><span class="col-span-3">Uttar Pradesh (09)</span></div>
                             </div>
                         </div>
 
                         <table class="w-full text-left border-collapse border-2 border-slate-900 mb-3">
                             <thead>
                                 <tr class="bg-slate-900 text-white text-[11px] font-bold uppercase">
-                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-12">SR NO[cite: 2]</th>
-                                    <th class="py-2.5 px-3 border-r border-slate-700 w-1/3">MACHINE NAME[cite: 2]</th>
-                                    <th class="py-2.5 px-3 border-r border-slate-700">SPECIFICATIONS[cite: 2]</th>
-                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-16">QTY[cite: 2]</th>
-                                    <th class="py-2.5 px-3 text-right w-28">PRICE (₹)[cite: 2]</th>
+                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-12">SR NO</th>
+                                    <th class="py-2.5 px-3 border-r border-slate-700 w-1/3">MACHINE NAME</th>
+                                    <th class="py-2.5 px-3 border-r border-slate-700">SPECIFICATIONS</th>
+                                    <th class="py-2.5 px-3 text-center border-r border-slate-700 w-16">QTY</th>
+                                    <th class="py-2.5 px-3 text-right w-28">PRICE (₹)</th>
                                 </tr>
                             </thead>
                             <tbody>${rowsHTML}</tbody>
@@ -860,126 +872,124 @@
 
                         <div class="border-2 border-slate-900 mb-3 p-3 bg-slate-50 flex justify-end">
                             <div class="w-80 space-y-1.5 text-right">
-                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>MACHINE VALUE[cite: 2]</span> <span>${formatINR(t.subTotal)}</span></div>
-                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>GST @ ${d.gstRate}%[cite: 2]</span> <span>${formatINR(t.gstAmt)}</span></div>
+                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>MACHINE VALUE</span> <span>${formatINR(t.subTotal)}</span></div>
+                                <div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>GST @ ${d.gstRate}%</span> <span>${formatINR(t.gstAmt)}</span></div>
                                 ${d.freight > 0 ? `<div class="flex justify-between border-b border-slate-300 py-1 font-bold"><span>FREIGHT / PACKING</span> <span>${formatINR(d.freight)}</span></div>` : ''}
-                                <div class="flex justify-between py-1 text-sm font-extrabold text-red-700 bg-red-50 px-2 rounded"><span>TOTAL PAYABLE (₹)[cite: 2]</span> <span>${formatINR(t.grandTotal)}</span></div>
+                                <div class="flex justify-between py-1 text-sm font-extrabold text-red-700 bg-red-50 px-2 rounded"><span>TOTAL PAYABLE (₹)</span> <span>${formatINR(t.grandTotal)}</span></div>
                             </div>
                         </div>
 
                         <div class="border-2 border-slate-900 p-2.5 mb-3 bg-white">
-                            <p class="font-bold text-[10px] text-slate-600 uppercase">AMOUNT IN WORDS[cite: 2]:</p>
-                            <p class="italic font-semibold text-slate-800 mt-0.5">Rupees Only[cite: 2]</p>
+                            <p class="font-bold text-[10px] text-slate-600 uppercase">AMOUNT IN WORDS:</p>
+                            <p class="italic font-semibold text-slate-800 mt-0.5">Rupees Only</p>
                         </div>
 
                         <div class="border-2 border-slate-900 mb-4">
-                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">CURRENT ACCOUNT DETAILS[cite: 2]</div>
+                            <div class="bg-slate-900 text-white px-3 py-1 font-bold uppercase text-[10px]">CURRENT ACCOUNT DETAILS</div>
                             <div class="p-2.5 space-y-1 text-[11px]">
-                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BANK NAME</span><span class="col-span-3 font-bold">YES BANK LTD[cite: 2, 3]</span></div>
-                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">ACCOUNT NO.</span><span class="col-span-3 font-mono font-bold">128861900001527[cite: 2, 3]</span></div>
+                                <div class="grid grid-cols-4 border-b border-slate-200 pb-1"><span class="font-bold text-red-700">BANK NAME</span><span class="col-span-3 font-bold">YES BANK LTD</span></div>
+                                <div class="grid grid-cols-4"><span class="font-bold text-red-700">ACCOUNT NO.</span><span class="col-span-3 font-mono font-bold">128861900001527</span></div>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-end pt-2 text-[9px] text-slate-600 border-t border-slate-300">
                             <div>
-                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993[cite: 2]</p>
-                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863[cite: 2]</p>
-                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301[cite: 2]</p>
-                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company[cite: 2]</p>
+                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993</p>
+                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863</p>
+                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301</p>
+                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company</p>
                             </div>
-                            <div class="text-right font-bold text-[9px]">Page 1 of 3[cite: 2]</div>
+                            <div class="text-right font-bold text-[9px]">Page 1 of 3</div>
                         </div>
                     </div>
-
 
                     <!-- ================= PAGE 2 ================= -->
                     <div class="border-2 border-slate-900 p-6 rounded bg-white relative page-break mt-6">
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                             <div>
-                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837[cite: 3]</p>
-                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 3]</h1>
-                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment[cite: 3]</p>
+                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
+                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
+                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888[cite: 3]</p>
-                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV[cite: 3]</p>
+                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888</p>
+                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV</p>
                             </div>
                         </div>
 
                         <div class="my-6">
                             <div class="border-2 border-slate-900">
-                                <div class="bg-slate-900 text-white px-3 py-1.5 font-bold uppercase text-[11px]">ACCOUNT HOLDER & IFSC DETAILS[cite: 3]</div>
+                                <div class="bg-slate-900 text-white px-3 py-1.5 font-bold uppercase text-[11px]">ACCOUNT HOLDER & IFSC DETAILS</div>
                                 <div class="p-4 space-y-2 text-xs">
-                                    <div class="grid grid-cols-4 border-b border-slate-200 pb-2"><span class="font-bold text-red-700">ACCOUNT HOLDER NAME</span><span class="col-span-3 font-bold">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 3]</span></div>
-                                    <div class="grid grid-cols-4"><span class="font-bold text-red-700">IFS CODE</span><span class="col-span-3 font-mono font-bold">YESB0001288[cite: 3]</span></div>
+                                    <div class="grid grid-cols-4 border-b border-slate-200 pb-2"><span class="font-bold text-red-700">ACCOUNT HOLDER NAME</span><span class="col-span-3 font-bold">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</span></div>
+                                    <div class="grid grid-cols-4"><span class="font-bold text-red-700">IFS CODE</span><span class="col-span-3 font-mono font-bold">YESB0001288</span></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-end pt-32 text-[9px] text-slate-600 border-t border-slate-300">
                             <div>
-                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993[cite: 3]</p>
-                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863[cite: 3]</p>
-                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301[cite: 3]</p>
-                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company[cite: 3]</p>
+                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993</p>
+                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863</p>
+                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301</p>
+                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company</p>
                             </div>
-                            <div class="text-right font-bold text-[9px]">Page 2 of 3[cite: 3]</div>
+                            <div class="text-right font-bold text-[9px]">Page 2 of 3</div>
                         </div>
                     </div>
-
 
                     <!-- ================= PAGE 3 ================= -->
                     <div class="border-2 border-slate-900 p-6 rounded bg-white relative page-break mt-6">
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                             <div>
-                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837[cite: 4]</p>
-                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 4]</h1>
-                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment[cite: 4]</p>
+                                <p class="text-[10px] font-bold text-slate-700">ISO CERTIFIED 9001:2015 COMPANY | E20260346837</p>
+                                <h1 class="text-base font-extrabold text-red-700 tracking-tight mt-1">ARF FOOD PROCESSING & PACKAGING INDUSTRIES</h1>
+                                <p class="text-[10px] text-slate-600 font-medium">Consultant & Mfg. of: All Types of Food Processing Machines & Kitchen Equipment</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888[cite: 4]</p>
-                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV[cite: 4]</p>
+                                <p class="text-[10px] font-bold text-slate-600">MSME REG: UP-28-0213888</p>
+                                <p class="text-[10px] font-bold text-slate-600">GSTIN: 09LHAPK3181L1ZV</p>
                             </div>
                         </div>
 
                         <div class="my-4">
-                            <div class="bg-red-700 text-white font-extrabold text-xs py-1.5 px-3 uppercase tracking-wider mb-3">TERMS & CONDITIONS[cite: 4]</div>
+                            <div class="bg-red-700 text-white font-extrabold text-xs py-1.5 px-3 uppercase tracking-wider mb-3">TERMS & CONDITIONS</div>
                             <div class="space-y-2 text-[11px] text-slate-800">
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">1.</span><span>Delivery within 15–20 working days.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">2.</span><span>Payment terms: 70% advance against purchase order, 20% at the time of dispatch, and the remaining 10% after installation.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">3.</span><span>This proforma invoice is valid for 7 days. It is not a tax invoice; a GST tax invoice will be issued at the time of dispatch.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">4.</span><span>The order can be cancelled only within 24 hours of placing it. If cancelled after 24 hours, 20% of the advance will be deducted.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">5.</span><span>The buyer will have to pay the transport charges.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">6.</span><span>Installation: the buyer must make available in advance all materials required — electrical power, lighting, heating, earthing, water, drainage, and material-handling arrangements.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">7.</span><span>If the buyer does not make full payment after machine installation, the supplier may take legal action.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">8.</span><span>For the first installation, the buyer will pay ₹1,000 per day towards travel, lodging and food for our technical person.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">9.</span><span>The company shall not pay any interest or damages for non-delivery due to reasons beyond its control.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">10.</span><span>Warranty: 12 months from the date of dispatch on all mechanical parts and motors.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">11.</span><span>The buyer must inform the technical department about installation within 10 days after delivery and clear the remaining 10% amount.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">12.</span><span>Duties & taxes will be extra, as applicable at the time of dispatch.[cite: 4]</span></div>
-                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">13.</span><span>If the installation site is more than 500 km away, the buyer must bear round-trip flight tickets for the executive.[cite: 4]</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">1.</span><span>Delivery within 15–20 working days.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">2.</span><span>Payment terms: 70% advance against purchase order, 20% at the time of dispatch, and the remaining 10% after installation.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">3.</span><span>This document is valid for 7 days. It is not a tax invoice; a GST tax invoice will be issued at the time of dispatch.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">4.</span><span>The order can be cancelled only within 24 hours of placing it. If cancelled after 24 hours, 20% of the advance will be deducted.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">5.</span><span>The buyer will have to pay the transport charges.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">6.</span><span>Installation: the buyer must make available in advance all materials required — electrical power, lighting, heating, earthing, water, drainage, and material-handling arrangements.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">7.</span><span>If the buyer does not make full payment after machine installation, the supplier may take legal action.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">8.</span><span>For the first installation, the buyer will pay ₹1,000 per day towards travel, lodging and food for our technical person.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">9.</span><span>The company shall not pay any interest or damages for non-delivery due to reasons beyond its control.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">10.</span><span>Warranty: 12 months from the date of dispatch on all mechanical parts and motors.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">11.</span><span>The buyer must inform the technical department about installation within 10 days after delivery and clear the remaining 10% amount.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">12.</span><span>Duties & taxes will be extra, as applicable at the time of dispatch.</span></div>
+                                <div class="flex gap-2 bg-red-50 p-1.5 rounded"><span class="font-bold text-red-700 w-5">13.</span><span>If the installation site is more than 500 km away, the buyer must bear round-trip flight tickets for the executive.</span></div>
                             </div>
                         </div>
 
                         <div class="pt-4 flex justify-between items-end">
                             <div>
-                                <p class="font-medium text-slate-700">Thanking you,[cite: 4]</p>
-                                <p class="font-bold text-slate-900 mt-1">For ARF FOOD PROCESSING & PACKAGING INDUSTRIES[cite: 4]</p>
+                                <p class="font-medium text-slate-700">Thanking you,</p>
+                                <p class="font-bold text-slate-900 mt-1">For ARF FOOD PROCESSING & PACKAGING INDUSTRIES</p>
                             </div>
                             <div class="text-right">
                                 <div class="h-10"></div>
-                                <p class="font-semibold text-slate-800 border-t border-slate-900 pt-1">Authorised Signatory[cite: 4]</p>
+                                <p class="font-semibold text-slate-800 border-t border-slate-900 pt-1">Authorised Signatory</p>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-end pt-12 text-[9px] text-slate-600 border-t border-slate-300">
                             <div>
-                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993[cite: 4]</p>
-                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863[cite: 4]</p>
-                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301[cite: 4]</p>
-                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company[cite: 4]</p>
+                                <p class="font-bold text-slate-800">ZED BRONZE REG: 16042026 865993</p>
+                                <p>Contact: +91 9871456863 | +91 9220796863 | +91 9625556863</p>
+                                <p>Email: sales.arfindustries@gmail.com | E-22, Sector 11, Noida, Gautam Buddh Nagar, Uttar Pradesh - 201301</p>
+                                <p class="italic mt-0.5">All types of snacks, food & kitchen equipment processing machine manufacturing company</p>
                             </div>
-                            <div class="text-right font-bold text-[9px]">Page 3 of 3[cite: 4]</div>
+                            <div class="text-right font-bold text-[9px]">Page 3 of 3</div>
                         </div>
                     </div>
 
@@ -1013,45 +1023,34 @@
 
         document.getElementById('leadForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            leads.unshift({
-                id: Date.now(),
+            db.collection("leads").add({
                 name: document.getElementById('l_name').value,
                 company: document.getElementById('l_company').value,
                 phone: document.getElementById('l_phone').value,
                 machine: document.getElementById('l_machine').value,
                 budget: Number(document.getElementById('l_budget').value || 0),
                 status: document.getElementById('l_status').value
-            });
-            saveAll(); closeModal('leadModal'); renderLeads();
+            }).then(() => closeModal('leadModal'));
         });
 
         document.getElementById('machineForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            machines.unshift({
-                id: Date.now(),
+            db.collection("machines").add({
                 sku: document.getElementById('m_sku').value,
                 name: document.getElementById('m_name').value,
-                cat: document.getElementById('m_cat').value,
+                cat: "Processing Line",
                 spec: document.getElementById('m_spec').value,
-                hsn: document.getElementById('m_hsn').value || '8438',
+                hsn: "8438",
                 price: Number(document.getElementById('m_price').value || 0),
                 stock: Number(document.getElementById('m_stock').value || 0)
-            });
-            saveAll(); closeModal('machineModal'); renderInventory();
+            }).then(() => closeModal('machineModal'));
         });
 
-        function deleteLead(id) { leads = leads.filter(x => x.id !== id); saveAll(); renderLeads(); }
-        function deleteMachine(id) { machines = machines.filter(x => x.id !== id); saveAll(); renderInventory(); }
-        function deleteDoc(id) { docs = docs.filter(x => x.id !== id); saveAll(); renderDocs(); }
-
-        function renderAll() {
-            updateKPIs();
-            renderLeads();
-            renderInventory();
-            renderDocs();
+        function deleteCloudDoc(col, id) {
+            if (confirm("Delete this item from cloud?")) {
+                db.collection(col).doc(id).delete();
+            }
         }
-
-        renderAll();
     </script>
 </body>
 </html>

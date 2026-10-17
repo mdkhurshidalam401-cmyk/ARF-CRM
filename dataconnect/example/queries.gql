@@ -1,0 +1,99 @@
+mutation CreateProject($name: String!, $firebaseProjectId: String!, $region: String, $description: String) @auth(level: USER) {
+  project_insert(data: { name: $name, firebaseProjectId: $firebaseProjectId, region: $region, description: $description })
+}
+
+mutation UpdateProject($id: UUID!, $description: String) @auth(level: USER) {
+  project_update(id: $id, data: { description: $description })
+}
+
+mutation DeleteProject($id: UUID!) @auth(level: USER) {
+  project_delete(id: $id)
+}
+
+query GetProject($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicly available project info.") {
+  project(id: $id) { name firebaseProjectId region description }
+}
+
+query ListProjects @auth(level: PUBLIC, insecureReason: "Public list of all projects.") {
+  projects { name firebaseProjectId }
+}
+
+mutation CreateEnvironment($name: String!, $projectId: UUID!) @auth(level: USER) {
+  environment_insert(data: { name: $name, projectId: $projectId })
+}
+
+mutation UpdateEnvironment($id: UUID!, $isActive: Boolean) @auth(level: USER) {
+  environment_update(id: $id, data: { isActive: $isActive })
+}
+
+mutation DeleteEnvironment($id: UUID!) @auth(level: USER) {
+  environment_delete(id: $id)
+}
+
+query GetEnvironment($id: UUID!) @auth(level: USER) {
+  environment(id: $id) { name isActive configurationSnapshot }
+}
+
+query ListEnvironments @auth(level: USER) {
+  environments { name isActive }
+}
+
+mutation CreateDeveloper($email: String!, $displayName: String!, $role: String) @auth(level: USER) {
+  developer_insert(data: { email: $email, displayName: $displayName, role: $role })
+}
+
+mutation UpdateDeveloper($id: UUID!, $displayName: String) @auth(level: USER) {
+  developer_update(id: $id, data: { displayName: $displayName })
+}
+
+mutation DeleteDeveloper($id: UUID!) @auth(level: USER) {
+  developer_delete(id: $id)
+}
+
+query GetDeveloper($id: UUID!) @auth(level: USER) {
+  developer(id: $id) { email displayName role githubUsername }
+}
+
+query ListDevelopers @auth(level: USER) {
+  developers { email displayName }
+}
+
+mutation CreateDeployment($environmentId: UUID!, $status: String!, $deployedAt: Timestamp!, $deployedById: UUID!) @auth(level: USER) {
+  deployment_insert(data: { environmentId: $environmentId, status: $status, deployedAt: $deployedAt, deployedById: $deployedById })
+}
+
+mutation UpdateDeployment($id: UUID!, $status: String!) @auth(level: USER) {
+  deployment_update(id: $id, data: { status: $status })
+}
+
+mutation DeleteDeployment($id: UUID!) @auth(level: USER) {
+  deployment_delete(id: $id)
+}
+
+query GetDeployment($id: UUID!) @auth(level: USER) {
+  deployment(id: $id) { status deployedAt versionTag }
+}
+
+query ListDeployments @auth(level: USER) {
+  deployments { status versionTag commitHash }
+}
+
+mutation CreateDeploymentLog($deploymentId: UUID!, $logMessage: String!, $severity: String!) @auth(level: USER) {
+  deploymentLog_insert(data: { deploymentId: $deploymentId, logMessage: $logMessage, severity: $severity })
+}
+
+mutation UpdateDeploymentLog($id: UUID!, $logMessage: String!) @auth(level: USER) {
+  deploymentLog_update(id: $id, data: { logMessage: $logMessage })
+}
+
+mutation DeleteDeploymentLog($id: UUID!) @auth(level: USER) {
+  deploymentLog_delete(id: $id)
+}
+
+query GetDeploymentLog($id: UUID!) @auth(level: USER) {
+  deploymentLog(id: $id) { logMessage severity timestamp }
+}
+
+query ListDeploymentLogs @auth(level: USER) {
+  deploymentLogs { logMessage severity timestamp }
+}

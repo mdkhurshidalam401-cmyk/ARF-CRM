@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Bootstrap administrator. Change this email if the Firebase owner account changes.
+    function isBootstrapAdmin() {
+      return signedIn() && request.auth.token.email == 'mdkhurshidalam401@gmail.com';
+    }
+
+    function userRole() {
+      return isBootstrapAdmin()
+        ? 'admin'
+        : (signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+            : 'viewer');
+    }
+
+    function isAdmin() { return signedIn() && userRole() == 'admin'; }
+    function isSales() { return signedIn() && userRole() == 'sales'; }
+    function isAccounts() { return signedIn() && userRole() == 'accounts'; }
+    function isInventory() { return signedIn() && userRole() == 'inventory'; }
+
+    match /users/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if isAdmin() ||
+        (signedIn() && request.auth.uid == uid &&
+         request.resource.data.role == 'viewer' &&
+         request.resource.data.email == request.auth.token.email);
+      allow update, delete: if isAdmin();
+    }
+
+    match /leads/{leadId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isSales();
+      allow delete: if isAdmin();
+    }
+
+    match /machines/{machineId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin() || isInventory();
+      allow update: if isAdmin() || isInventory() ||
+        (isAccounts() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updatedAt']));
+    }
+
+    match /docs/{docId} {
+      allow read: if signedIn();
+      allow create: if isAdmin() || isAccounts() ||
+        (isSales() && request.resource.data.type in ['Quotation', 'Proforma Invoice', 'Delivery Challan']);
+      allow update: if isAdmin() || isAccounts();
+      allow delete: if isAdmin();
+    }
+
+    match /_connectionTests/{testId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Everything not explicitly listed above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

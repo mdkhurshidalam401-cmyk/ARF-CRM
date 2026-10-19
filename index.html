@@ -798,6 +798,9 @@
             const docRef = db.collection('docs').doc();
             const data = {
                 ...documentData,
+                createdByUid: currentUser ? currentUser.uid : null,
+                createdByEmail: currentUser ? (currentUser.email || '') : '',
+                createdByName: currentUser ? (currentUser.displayName || currentUser.email || '') : '',
                 docNo: (DOC_PREFIXES[documentData.type] || 'ARF/DOC/26-27/') + docRef.id.slice(-8).toUpperCase(),
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -870,7 +873,11 @@
             ['dashboard', 'inventory', 'billing', 'team'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 const nav = document.getElementById('nav-' + t);
-                if (nav) nav.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition";
+                if (nav) {
+                    nav.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition";
+                    const allowed = t === 'team' ? currentRole === 'admin' : hasPermission(t);
+                    if (!allowed) nav.classList.add('hidden');
+                }
             });
 
             document.getElementById('tab-' + tab).classList.remove('hidden');
@@ -884,6 +891,16 @@
                 team: "Team & Role Access Management"
             };
             document.getElementById('pageTitle').innerText = titles[tab];
+        }
+
+        function applyRowActionPermissions() {
+            document.querySelectorAll('#leadTableBody button[onclick*=\"quickQuoteFromLead\"]').forEach(el => el.classList.toggle('hidden', !hasPermission('billingWrite')));
+            document.querySelectorAll('#inventoryTableBody button[onclick*=\"adjustStockCloud\"]').forEach(el => el.classList.toggle('hidden', !hasPermission('inventoryWrite')));
+            document.querySelectorAll('button[onclick*=\"deleteCloudDoc\"]').forEach(el => el.classList.toggle('hidden', currentRole !== 'admin'));
+            document.querySelectorAll('#docTableBody button[onclick*=\"convertDoc\"]').forEach(el => {
+                const call = el.getAttribute('onclick') || '';
+                el.classList.toggle('hidden', !hasPermission('billingWrite') || (call.includes('Tax Invoice') && !hasPermission('invoiceWrite')));
+            });
         }
 
         function renderLeads() {
@@ -932,6 +949,7 @@
                     </tr>
                 `;
             });
+            applyRowActionPermissions();
         }
 
         function renderInventory() {
@@ -963,6 +981,7 @@
                     </tr>
                 `;
             });
+            applyRowActionPermissions();
         }
 
         async function adjustStockCloud(id, delta) {
@@ -1042,6 +1061,7 @@
                     </tr>
                 `;
             });
+            applyRowActionPermissions();
         }
 
         async function convertDoc(id, targetType) {

@@ -11,6 +11,7 @@
     <!-- Firebase App & Firestore SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -34,6 +35,25 @@
     </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-800 antialiased flex h-screen overflow-hidden">
+    <!-- Secure Firebase login gate: no CRM data is shown until an authorized account signs in. -->
+    <div id="loginGate" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950 p-4">
+      <form id="loginForm" class="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl space-y-5">
+        <div class="text-center">
+          <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500 text-2xl text-white"><i class="fa-solid fa-gears"></i></div>
+          <h1 class="text-2xl font-extrabold text-slate-900">ARF CRM Login</h1>
+          <p class="mt-1 text-sm text-slate-500">Sign in with your authorized company account</p>
+        </div>
+        <label class="block text-sm font-semibold text-slate-700">Email
+          <input id="loginEmail" type="email" autocomplete="username" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 outline-none focus:border-orange-500" placeholder="Authorized email address">
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Password
+          <input id="loginPassword" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 outline-none focus:border-orange-500" placeholder="Password">
+        </label>
+        <p id="loginError" class="hidden rounded-lg bg-rose-50 p-3 text-sm text-rose-700" role="alert"></p>
+        <button id="loginButton" type="submit" class="w-full rounded-xl bg-orange-600 px-4 py-3 font-bold text-white hover:bg-orange-500">Sign in securely</button>
+        <p class="text-xs leading-5 text-slate-500">Accounts are created by the Firebase project administrator. There is no public sign-up.</p>
+      </form>
+    </div>
 
     <!-- LEFT SIDEBAR -->
     <aside class="w-64 bg-[#0F172A] text-slate-300 flex flex-col justify-between hidden md:flex shrink-0 select-none border-r border-slate-800">
@@ -97,12 +117,12 @@
         <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <h1 id="pageTitle" class="text-lg font-bold text-slate-800">Machinery Sales & Leads CRM</h1>
-                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <i class="fa-solid fa-cloud text-[10px]"></i> Firebase Connected
-                </span>
+                <span id="firebaseStatus" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200"><i class="fa-solid fa-cloud text-[10px]"></i> Checking Firebase…</span>
             </div>
 
             <div class="flex items-center gap-2.5">
+                <span id="signedInEmail" class="hidden max-w-[180px] truncate text-xs text-slate-500"></span>
+                <button id="signOutButton" type="button" onclick="firebase.auth().signOut()" class="hidden rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Sign out</button>
                 <button onclick="openMachineModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
                     <i class="fa-solid fa-gears text-blue-600"></i> + Add Machine
                 </button>
@@ -114,6 +134,10 @@
                 </button>
             </div>
         </header>
+        <div class="no-print flex flex-wrap items-center justify-between gap-2 px-6 py-2 bg-slate-50 border-b border-slate-200 text-xs">
+            <span id="cloudMessage" role="status" class="text-slate-600">Checking Firestore connection…</span>
+            <button type="button" onclick="testFirestoreConnection()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 font-semibold text-slate-700">Test Cloud Save</button>
+        </div>
 
         <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
@@ -480,28 +504,99 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
+        let cloudListenersStarted = false;
+
+        function setCloudStatus(message, ok = null) {
+            const msg = document.getElementById('cloudMessage');
+            const badge = document.getElementById('firebaseStatus');
+            if (msg) msg.textContent = message;
+            if (badge) {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ' +
+                    (ok === true ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ok === false ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200');
+                badge.innerHTML = '<i class="fa-solid fa-cloud text-[10px]"></i> ' + (ok === true ? 'Firestore Ready' : ok === false ? 'Firestore Error' : 'Checking Firebase…');
+            }
+        }
+
+        async function testFirestoreConnection() {
+            setCloudStatus('Testing Firestore write permission…');
+            try {
+                const ref = await db.collection('_connectionTests').add({ project: firebaseConfig.projectId, test: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                await ref.delete();
+                setCloudStatus('Firestore read/write test successful. Project: ' + firebaseConfig.projectId, true);
+                alert('Firebase cloud save test SUCCESSFUL. Temporary test record was deleted.');
+            } catch (err) {
+                console.error('Firestore connection test failed:', err);
+                setCloudStatus('Firestore test failed: ' + (err.code || '') + ' ' + err.message, false);
+                alert('Firebase cloud test FAILED\nCode: ' + (err.code || 'unknown') + '\nMessage: ' + err.message + '\nCheck Firestore Database and Rules.');
+            }
+        }
 
         let machines = [];
         let leads = [];
         let docs = [];
         let currentDocFilter = 'All';
 
-        // Real-time synchronization with Firestore Cloud
-        db.collection("machines").onSnapshot(snapshot => {
-            machines = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderInventory(); updateKPIs();
-        }, err => { console.error(err); alert("Inventory load failed: " + err.message + "\\nFirebase Firestore rules/connection check karein."); });
+        // Attach Firestore listeners only after an authorized user signs in.
+        function startCloudListeners() {
+            if (cloudListenersStarted) return;
+            cloudListenersStarted = true;
+            db.collection("machines").onSnapshot(snapshot => {
+                machines = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderInventory(); updateKPIs();
+            }, err => { console.error(err); setCloudStatus("Inventory load failed: " + err.message, false); });
 
-        db.collection("leads").onSnapshot(snapshot => {
-            leads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderLeads(); updateKPIs();
-        }, err => { console.error(err); alert("Leads load failed: " + err.message); });
+            db.collection("leads").onSnapshot(snapshot => {
+                leads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderLeads(); updateKPIs();
+            }, err => { console.error(err); setCloudStatus("Leads load failed: " + err.message, false); });
 
-        db.collection("docs").onSnapshot(snapshot => {
-            docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderDocs(); updateKPIs();
-        }, err => { console.error(err); alert("Billing documents load failed: " + err.message + "\\nFirestore rules/connection check karein."); });
+            db.collection("docs").onSnapshot(snapshot => {
+                docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderDocs(); updateKPIs();
+            }, err => { console.error(err); setCloudStatus("Billing documents load failed: " + err.message, false); });
+        }
 
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const button = document.getElementById('loginButton');
+            const errorBox = document.getElementById('loginError');
+            errorBox.classList.add('hidden');
+            button.disabled = true;
+            button.textContent = 'Signing in…';
+            try {
+                await auth.signInWithEmailAndPassword(
+                    document.getElementById('loginEmail').value.trim(),
+                    document.getElementById('loginPassword').value
+                );
+            } catch (err) {
+                console.error('Login failed:', err);
+                errorBox.textContent = 'Login failed: ' + (err.code || '') + ' ' + err.message;
+                errorBox.classList.remove('hidden');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Sign in securely';
+            }
+        });
+
+        auth.onAuthStateChanged(user => {
+            const gate = document.getElementById('loginGate');
+            const emailLabel = document.getElementById('signedInEmail');
+            const signOut = document.getElementById('signOutButton');
+            if (user) {
+                gate.classList.add('hidden');
+                emailLabel.textContent = user.email || 'Signed in';
+                emailLabel.classList.remove('hidden');
+                signOut.classList.remove('hidden');
+                setCloudStatus('Signed in. Connecting to Firestore…');
+                startCloudListeners();
+            } else {
+                gate.classList.remove('hidden');
+                emailLabel.classList.add('hidden');
+                signOut.classList.add('hidden');
+                setCloudStatus('Sign in required to access cloud data.', false);
+            }
+        });
         function formatINR(n) {
             return '₹' + Number(n || 0).toLocaleString('en-IN');
         }
@@ -760,7 +855,7 @@
             }
         }
 
-        document.getElementById('docForm').addEventListener('submit', function(e) {
+        document.getElementById('docForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const type = document.getElementById('d_type').value;
             const prefixMap = { 
@@ -806,22 +901,33 @@
             };
 
             const submitButton = document.querySelector('#docForm button[type="submit"]');
+            if (submitButton.disabled) return;
             submitButton.disabled = true;
-            submitButton.textContent = "Saving...";
-            db.collection("docs").add(newDoc).then((ref) => {
-                // Preview from the submitted payload immediately; do not wait for onSnapshot.
-                docs = [{ id: ref.id, ...newDoc }, ...docs];
+            submitButton.textContent = 'Saving to cloud…';
+            setCloudStatus('Saving bill to Firestore…');
+            try {
+                const ref = await db.collection('docs').add({
+                    ...newDoc,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                const savedSnapshot = await ref.get();
+                if (!savedSnapshot.exists) throw new Error('Firestore write could not be read back. Check Firestore Rules.');
+                const savedDoc = { id: ref.id, ...savedSnapshot.data() };
+                docs = [savedDoc, ...docs.filter(x => x.id !== ref.id)];
                 closeModal('docModal');
                 switchTab('billing');
                 renderDocs(); updateKPIs();
-                previewDoc(ref.id, newDoc);
-            }).catch(err => {
-                console.error("Document save failed:", err);
-                alert("Document save nahi hua. Firebase error: " + err.message + "\\nFirestore Database aur Rules check karein.");
-            }).finally(() => {
+                setCloudStatus('Bill saved successfully in Firestore. Document ID: ' + ref.id, true);
+                previewDoc(ref.id, savedDoc);
+            } catch (err) {
+                console.error('Document cloud save failed:', err);
+                setCloudStatus('Bill NOT saved: ' + (err.code || '') + ' ' + err.message, false);
+                alert('BILL CLOUD SAVE FAILED — record is not confirmed saved.\nCode: ' + (err.code || 'unknown') + '\nMessage: ' + err.message + '\nCheck Firestore Rules, internet, and project configuration.');
+            } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = "Generate Document";
-            });
+                submitButton.textContent = 'Generate Document';
+            }
         });
 
         // OFFICIAL 3-PAGE EXACT ARF PROFORMA INVOICE FORMAT
@@ -1072,9 +1178,15 @@
             }).then(() => closeModal('machineModal')).catch(err => { console.error(err); alert("Machine save failed: " + err.message); });
         });
 
-        function deleteCloudDoc(col, id) {
-            if (confirm("Delete this item from cloud?")) {
-                db.collection(col).doc(id).delete();
+        async function deleteCloudDoc(col, id) {
+            if (!confirm('Delete this item from cloud? This cannot be undone.')) return;
+            try {
+                await db.collection(col).doc(id).delete();
+                setCloudStatus('Record deleted from Firestore.', true);
+            } catch (err) {
+                console.error('Cloud delete failed:', err);
+                setCloudStatus('Delete failed: ' + (err.code || '') + ' ' + err.message, false);
+                alert('Delete failed: ' + (err.code || '') + ' ' + err.message);
             }
         }
     </script>

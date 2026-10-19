@@ -551,11 +551,16 @@
                 renderLeads(); updateKPIs();
             }, err => { console.error(err); setCloudStatus("Leads load failed: " + err.message, false); });
 
-            db.collection("docs").onSnapshot(snapshot => {
-                // Firestore snapshot is the source of truth; always render from server-backed collection state.
+            db.collection("docs").onSnapshot({ includeMetadataChanges: true }, snapshot => {
+                // The listener is the single live source of truth; never prepend locally and duplicate records.
                 docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderDocs(); updateKPIs();
-                if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) {
+                renderDocs();
+                updateKPIs();
+                if (snapshot.metadata.fromCache) {
+                    setCloudStatus('Showing cached billing data while connecting to Firestore…');
+                } else if (snapshot.metadata.hasPendingWrites) {
+                    setCloudStatus('Billing changes are syncing to Firestore…');
+                } else {
                     setCloudStatus('Cloud connected. ' + docs.length + ' document(s) loaded from Firestore.', true);
                 }
             }, err => {
@@ -609,11 +614,73 @@
         }
 
         function calcDocTotals(doc) {
-            const subTotal = (doc.items || []).reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0);
-            const taxable = subTotal + Number(doc.freight || 0);
-            const gstAmt = Math.round(taxable * (Number(doc.gstRate || 0) / 100));
-            const grandTotal = taxable + gstAmt;
-            return { subTotal, taxable, gstAmt, grandTotal };
+            const items = Array.isArray(doc && doc.items) ? doc.items : [];
+            const subTotal = items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
+            const taxable = subTotal + (Number(doc && doc.freight) || 0);
+            const gstAmt = Math.round(taxable * ((Number(doc && doc.gstRate) || 0) / 100));
+            return { subTotal, taxable, gstAmt, grandTotal: taxable + gstAmt };
+        }
+
+        const DOC_PREFIXES = {
+            'Quotation': 'ARF/QTN/26-27/',
+            'Proforma Invoice': 'ARF/PI/26-27/',
+            'Delivery Challan': 'ARF/DC/26-27/',
+            'Tax Invoice': 'ARF/INV/26-27/'
+        };
+
+        // Firestore auto IDs make the document number collision-resistant without a separate counter/rules dependency.
+        async function saveCloudDocument(documentData) {
+            const docRef = db.collection('docs').doc();
+            const data = {
+                ...documentData,
+                docNo: (DOC_PREFIXES[documentData.type] || 'ARF/DOC/26-27/') + docRef.id.slice(-8).toUpperCase(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Find inventory records before starting the transaction; transactions must perform reads before writes.
+            const inventoryBySku = new Map();
+            if (documentData.type === 'Tax Invoice') {
+                const skus = [...new Set((documentData.items || []).map(item => item.sku).filter(sku => sku && sku !== 'ARF-MCH'))];
+                for (const sku of skus) {
+                    const match = await db.collection('machines').where('sku', '==', sku).limit(1).get({ source: 'server' });
+                    if (!match.empty) inventoryBySku.set(sku, match.docs[0].ref);
+                }
+            }
+
+            await db.runTransaction(async transaction => {
+                const inventoryEntries = [...inventoryBySku.entries()];
+                const snapshots = [];
+                for (const [sku, ref] of inventoryEntries) {
+                    snapshots.push({ sku, ref, snapshot: await transaction.get(ref) });
+                }
+
+                const requiredByRef = new Map();
+                for (const item of (documentData.items || [])) {
+                    const ref = inventoryBySku.get(item.sku);
+                    if (ref) requiredByRef.set(ref.path, (requiredByRef.get(ref.path) || 0) + Math.max(0, Number(item.qty) || 0));
+                }
+
+                for (const entry of snapshots) {
+                    if (!entry.snapshot.exists) throw new Error('Inventory item ' + entry.sku + ' no longer exists. Refresh inventory and retry.');
+                    const required = requiredByRef.get(entry.ref.path) || 0;
+                    const available = Number(entry.snapshot.data().stock) || 0;
+                    if (required > available) {
+                        throw new Error('Insufficient stock for SKU ' + entry.sku + '. Available: ' + available + ', required: ' + required + '.');
+                    }
+                }
+
+                transaction.set(docRef, data);
+                for (const entry of snapshots) {
+                    const required = requiredByRef.get(entry.ref.path) || 0;
+                    if (required > 0) transaction.update(entry.ref, {
+                        stock: (Number(entry.snapshot.data().stock) || 0) - required,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+
+            return { id: docRef.id, ...data };
         }
 
         function updateKPIs() {
@@ -728,11 +795,24 @@
             });
         }
 
-        function adjustStockCloud(id, delta) {
-            const m = machines.find(x => x.id === id);
-            if (m) {
-                const newStock = Math.max(0, Number(m.stock) + delta);
-                db.collection("machines").doc(id).update({ stock: newStock });
+        async function adjustStockCloud(id, delta) {
+            const machine = machines.find(item => item.id === id);
+            if (!machine) return;
+            const ref = db.collection('machines').doc(id);
+            try {
+                await db.runTransaction(async transaction => {
+                    const snapshot = await transaction.get(ref);
+                    if (!snapshot.exists) throw new Error('Inventory item no longer exists. Refresh and retry.');
+                    const current = Number(snapshot.data().stock) || 0;
+                    const next = current + Number(delta);
+                    if (next < 0) throw new Error('Stock cannot be negative.');
+                    transaction.update(ref, { stock: next, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                });
+                setCloudStatus('Inventory stock updated.', true);
+            } catch (err) {
+                console.error('Stock update failed:', err);
+                setCloudStatus('Stock update failed: ' + (err.code || '') + ' ' + err.message, false);
+                alert('Stock update failed: ' + err.message);
             }
         }
 
@@ -793,21 +873,40 @@
             });
         }
 
-        function convertDoc(id, targetType) {
-            const orig = docs.find(d => d.id === id);
-            if (!orig) return;
-            const prefix = targetType === 'Proforma Invoice' ? 'ARF/PI/26-27/' : 'ARF/INV/26-27/';
-            const newDoc = JSON.parse(JSON.stringify(orig));
-            delete newDoc.id;
-            newDoc.type = targetType;
-            newDoc.date = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(new Date().getDate()).padStart(2,'0');
-            newDoc.docNo = prefix + Math.floor(100 + Math.random() * 900);
+        async function convertDoc(id, targetType) {
+            const original = docs.find(document => document.id === id);
+            if (!original) {
+                alert('Document not found. Refresh the billing list and retry.');
+                return;
+            }
+            if (!DOC_PREFIXES[targetType]) {
+                alert('Unsupported document conversion: ' + targetType);
+                return;
+            }
+            try {
+                const converted = { ...original };
+                delete converted.id;
+                delete converted.createdAt;
+                delete converted.updatedAt;
+                converted.type = targetType;
+                converted.date = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
+                converted.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
 
-            db.collection("docs").add(newDoc).then((ref) => {
-                docs = [{ id: ref.id, ...newDoc }, ...docs];
-                renderDocs(); updateKPIs();
-                previewDoc(ref.id, newDoc);
-            }).catch(err => { console.error(err); alert("Conversion save failed: " + err.message); });
+                const saved = await saveCloudDocument(converted);
+                const serverSnapshot = await db.collection('docs').doc(saved.id).get({ source: 'server' });
+                if (!serverSnapshot.exists) throw new Error('Converted document could not be confirmed on the Firestore server.');
+                const confirmed = { id: serverSnapshot.id, ...serverSnapshot.data() };
+                const collectionSnapshot = await db.collection('docs').get({ source: 'server' });
+                docs = collectionSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+                renderDocs();
+                updateKPIs();
+                setCloudStatus('Conversion confirmed on server. ' + docs.length + ' document(s) loaded.', true);
+                previewDoc(confirmed.id, confirmed);
+            } catch (err) {
+                console.error('Document conversion failed:', err);
+                setCloudStatus('Conversion failed: ' + (err.code || '') + ' ' + err.message, false);
+                alert('Conversion failed; no success was reported. ' + (err.code || '') + ' ' + err.message);
+            }
         }
 
         function openDocModal(defaultType = 'Proforma Invoice', prefillLead = null) {
@@ -864,82 +963,78 @@
 
         document.getElementById('docForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const form = document.getElementById('docForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton.disabled) return;
+
             const type = document.getElementById('d_type').value;
-            const prefixMap = { 
-                'Quotation': 'ARF/QTN/26-27/', 
-                'Proforma Invoice': 'ARF/PI/26-27/', 
-                'Delivery Challan': 'ARF/DC/26-27/', 
-                'Tax Invoice': 'ARF/INV/26-27/' 
-            };
+            if (!DOC_PREFIXES[type]) {
+                alert('Please select a valid document type.');
+                return;
+            }
 
-            const rows = document.querySelectorAll('.doc-item-row');
             const items = [];
-            rows.forEach(r => {
-                const name = r.querySelector('.item-name').value.trim();
-                const spec = r.querySelector('.item-spec').value.trim() || 'Standard';
-                const qty = Number(r.querySelector('.item-qty').value || 1);
-                const price = Number(r.querySelector('.item-price').value || 0);
-                const sku = r.dataset.sku || 'ARF-MCH';
-                const hsn = r.dataset.hsn || '8438';
-
-                if (name) {
-                    items.push({ sku, name, spec, hsn, qty, price });
+            document.querySelectorAll('.doc-item-row').forEach(row => {
+                const name = row.querySelector('.item-name').value.trim();
+                const qty = Number(row.querySelector('.item-qty').value);
+                const price = Number(row.querySelector('.item-price').value);
+                if (name && Number.isFinite(qty) && qty > 0 && Number.isFinite(price) && price >= 0) {
+                    items.push({
+                        sku: row.dataset.sku || 'ARF-MCH',
+                        hsn: row.dataset.hsn || '8438',
+                        name,
+                        spec: row.querySelector('.item-spec').value.trim() || 'Standard',
+                        qty,
+                        price
+                    });
                 }
             });
 
-            if (items.length === 0) {
-                alert("Please add at least one machine item.");
+            if (!items.length) {
+                alert('Please add at least one valid machine item.');
                 return;
             }
 
             const newDoc = {
-                docNo: prefixMap[type] + Math.floor(100 + Math.random() * 900),
-                date: new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-' + String(new Date().getDate()).padStart(2,'0'),
+                date: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
                 type,
                 client: document.getElementById('d_client').value.trim(),
                 gstin: document.getElementById('d_gstin').value.trim() || 'Unregistered',
                 address: document.getElementById('d_address').value.trim(),
                 phone: document.getElementById('d_phone').value.trim(),
                 items,
-                freight: Number(document.getElementById('d_freight').value || 0),
-                gstRate: Number(document.getElementById('d_gst').value || 18),
+                freight: Math.max(0, Number(document.getElementById('d_freight').value) || 0),
+                gstRate: Math.max(0, Number(document.getElementById('d_gst').value) || 0),
                 subject: document.getElementById('d_subject').value.trim() || 'MAKHANA PROCESSING MACHINERY',
                 terms: document.getElementById('d_terms').value.trim()
             };
 
-            const submitButton = document.querySelector('#docForm button[type="submit"]');
-            if (submitButton.disabled) return;
             submitButton.disabled = true;
+            const originalButtonText = submitButton.textContent;
             submitButton.textContent = 'Saving to cloud…';
-            setCloudStatus('Saving bill to Firestore…');
+            setCloudStatus('Saving document to Firestore…');
             try {
-                const ref = await db.collection('docs').add({
-                    ...newDoc,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                // Force a server read-back so a local/optimistic UI update cannot masquerade as a saved bill.
-                const savedSnapshot = await ref.get({ source: 'server' });
-                if (!savedSnapshot.exists) throw new Error('The bill write was not found on the Firestore server. Check project configuration and Firestore Rules.');
-                const savedDoc = { id: ref.id, ...savedSnapshot.data() };
-
-                // Reload the entire collection from the server before declaring success.
-                const serverDocsSnapshot = await db.collection('docs').get({ source: 'server' });
-                docs = serverDocsSnapshot.docs.map(documentSnapshot => ({ id: documentSnapshot.id, ...documentSnapshot.data() }));
-                if (!docs.some(item => item.id === ref.id)) throw new Error('Bill write returned success but the bill is missing from the server collection.');
+                const saved = await saveCloudDocument(newDoc);
+                const savedSnapshot = await db.collection('docs').doc(saved.id).get({ source: 'server' });
+                if (!savedSnapshot.exists) throw new Error('The document write was not confirmed by the Firestore server.');
+                const confirmed = { id: savedSnapshot.id, ...savedSnapshot.data() };
+                const collectionSnapshot = await db.collection('docs').get({ source: 'server' });
+                docs = collectionSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+                if (!docs.some(item => item.id === confirmed.id)) throw new Error('Saved document is missing from the server collection.');
 
                 closeModal('docModal');
                 switchTab('billing');
-                renderDocs(); updateKPIs();
-                setCloudStatus('Confirmed on Firestore server. ' + docs.length + ' document(s) loaded. Saved ID: ' + ref.id, true);
-                previewDoc(ref.id, savedDoc);
+                renderDocs();
+                updateKPIs();
+                setCloudStatus('Confirmed on Firestore server. ' + docs.length + ' document(s) loaded. Saved ID: ' + confirmed.id, true);
+                previewDoc(confirmed.id, confirmed);
             } catch (err) {
                 console.error('Document cloud save failed:', err);
-                setCloudStatus('Bill NOT saved: ' + (err.code || '') + ' ' + err.message, false);
-                alert('BILL CLOUD SAVE FAILED — record is not confirmed saved.\nCode: ' + (err.code || 'unknown') + '\nMessage: ' + err.message + '\nCheck Firestore Rules, internet, and project configuration.');
+                setCloudStatus('Document NOT confirmed saved: ' + (err.code || '') + ' ' + err.message, false);
+                alert('DOCUMENT SAVE FAILED — the save was not confirmed.\nCode: ' + (err.code || 'unknown') + '\nMessage: ' + err.message + '\nCheck Firestore Rules, connection, and inventory stock.');
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = 'Generate Document';
+                submitButton.textContent = originalButtonText || 'Generate Document';
             }
         });
 

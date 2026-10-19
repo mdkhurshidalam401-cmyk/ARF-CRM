@@ -80,9 +80,12 @@
                     <span id="badge-stock" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">0</span>
                 </button>
 
-                <button onclick="switchTab('billing')" id="nav-billing" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition">
+                <button onclick="switchTab('billing')" id="nav-billing" data-module="billing" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition">
                     <span class="flex items-center gap-3"><i class="fa-solid fa-file-invoice-dollar w-5 text-center text-sm"></i> Quotations, PI & Bills</span>
                     <span id="badge-docs" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">0</span>
+                </button>
+                <button onclick="switchTab('team')" id="nav-team" data-admin-only="true" class="hidden w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition">
+                    <span class="flex items-center gap-3"><i class="fa-solid fa-users-gear w-5 text-center text-sm"></i> Team & Roles</span>
                 </button>
             </div>
 
@@ -122,6 +125,7 @@
 
             <div class="flex items-center gap-2.5">
                 <span id="signedInEmail" class="hidden max-w-[180px] truncate text-xs text-slate-500"></span>
+                <span id="signedInRole" class="hidden rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-bold uppercase text-orange-700"></span>
                 <button id="signOutButton" type="button" onclick="firebase.auth().signOut()" class="hidden rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Sign out</button>
                 <button onclick="openMachineModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
                     <i class="fa-solid fa-gears text-blue-600"></i> + Add Machine
@@ -287,6 +291,44 @@
                 </div>
             </section>
 
+            <section id="tab-team" class="hidden space-y-4">
+                <div class="rounded-2xl border border-slate-200 bg-white p-5">
+                    <h2 class="text-base font-extrabold text-slate-900">Team Access Management</h2>
+                    <p class="mt-1 text-xs text-slate-500">Employee ko pehle Firebase Authentication mein create karein. Phir uska exact UID yahan enter karke role assign karein. Sabhi authorized users shared cloud records dekhenge, lekin write actions role ke hisaab se control honge.</p>
+                    <form id="roleForm" class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label class="text-xs font-semibold text-slate-600">Firebase Authentication UID
+                            <input id="roleUid" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" placeholder="Paste employee UID">
+                        </label>
+                        <label class="text-xs font-semibold text-slate-600">Employee Email
+                            <input id="roleEmail" required type="email" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" placeholder="employee@company.com">
+                        </label>
+                        <label class="text-xs font-semibold text-slate-600">Employee Name
+                            <input id="roleName" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" placeholder="Full name">
+                        </label>
+                        <label class="text-xs font-semibold text-slate-600">Role
+                            <select id="roleValue" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 bg-white">
+                                <option value="sales">Sales</option>
+                                <option value="accounts">Accounts</option>
+                                <option value="inventory">Inventory</option>
+                                <option value="viewer">View Only</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                        <div class="md:col-span-2 flex justify-end">
+                            <button type="submit" class="rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white">Save User Role</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-5">
+                    <h3 class="font-bold text-slate-800">Registered Team</h3>
+                    <div class="mt-3 overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead><tr class="border-b bg-slate-50 text-slate-500"><th class="p-3">Name / Email</th><th class="p-3">UID</th><th class="p-3">Role</th><th class="p-3 text-right">Action</th></tr></thead>
+                            <tbody id="teamTableBody"><tr><td colspan="4" class="p-4 text-center text-slate-400">Loading team…</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -506,6 +548,112 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         let cloudListenersStarted = false;
+        let currentUser = null;
+        let currentRole = 'viewer';
+        let roleListener = null;
+        const ADMIN_EMAILS = ['mdkhurshidalam401@gmail.com'];
+        const ROLE_LABELS = { admin: 'Admin', sales: 'Sales', accounts: 'Accounts', inventory: 'Inventory', viewer: 'View Only' };
+        const ROLE_PERMISSIONS = {
+            admin: ['dashboard', 'leadsWrite', 'inventory', 'inventoryWrite', 'billing', 'billingWrite', 'invoiceWrite', 'team'],
+            sales: ['dashboard', 'leadsWrite', 'billing', 'billingWrite'],
+            accounts: ['dashboard', 'billing', 'billingWrite', 'invoiceWrite', 'inventory'],
+            inventory: ['inventory', 'inventoryWrite'],
+            viewer: ['dashboard', 'inventory', 'billing']
+        };
+        function hasPermission(permission) {
+            return (ROLE_PERMISSIONS[currentRole] || ROLE_PERMISSIONS.viewer).includes(permission);
+        }
+        function requirePermission(permission) {
+            if (hasPermission(permission)) return true;
+            alert('Access denied. Your assigned role (' + (ROLE_LABELS[currentRole] || currentRole) + ') does not have permission for this action.');
+            return false;
+        }
+        function applyRolePermissions() {
+            document.getElementById('signedInRole').textContent = ROLE_LABELS[currentRole] || currentRole;
+            document.getElementById('signedInRole').classList.remove('hidden');
+            document.querySelectorAll('[data-admin-only="true"]').forEach(el => el.classList.toggle('hidden', currentRole !== 'admin'));
+            const moduleAccess = { dashboard: hasPermission('dashboard'), inventory: hasPermission('inventory'), billing: hasPermission('billing'), team: currentRole === 'admin' };
+            ['dashboard', 'inventory', 'billing'].forEach(tab => {
+                const nav = document.getElementById('nav-' + tab);
+                if (nav) nav.classList.toggle('hidden', !moduleAccess[tab]);
+                const section = document.getElementById('tab-' + tab);
+                if (section) section.classList.toggle('hidden', !moduleAccess[tab] || !section.classList.contains('active-tab'));
+            });
+            document.getElementById('tab-team').classList.toggle('hidden', currentRole !== 'admin');
+            document.querySelectorAll('[onclick*="openLeadModal"]').forEach(el => el.classList.toggle('hidden', !hasPermission('leadsWrite')));
+            document.querySelectorAll('[onclick*="quickQuoteFromLead"]').forEach(el => el.classList.toggle('hidden', !hasPermission('billingWrite')));
+            document.querySelectorAll('[onclick*="openMachineModal"]').forEach(el => el.classList.toggle('hidden', !hasPermission('inventoryWrite')));
+            document.querySelectorAll('[onclick*="adjustStockCloud"]').forEach(el => el.classList.toggle('hidden', !hasPermission('inventoryWrite')));
+            document.querySelectorAll('[onclick*="deleteCloudDoc"]').forEach(el => el.classList.toggle('hidden', currentRole !== 'admin'));
+            document.querySelectorAll('[onclick*="openDocModal"]').forEach(el => {
+                const call = el.getAttribute('onclick') || '';
+                const isInvoice = call.includes('Tax Invoice');
+                el.classList.toggle('hidden', !hasPermission('billingWrite') || (isInvoice && !hasPermission('invoiceWrite')));
+            });
+            document.querySelectorAll('[onclick*="convertDoc"]').forEach(el => {
+                const call = el.getAttribute('onclick') || '';
+                const isInvoice = call.includes('Tax Invoice');
+                el.classList.toggle('hidden', !hasPermission('billingWrite') || (isInvoice && !hasPermission('invoiceWrite')));
+            });
+            const testButton = document.querySelector('button[onclick="testFirestoreConnection()"]');
+            if (testButton) testButton.classList.toggle('hidden', currentRole !== 'admin');
+            if (currentRole === 'admin') loadTeamUsers();
+        }
+        async function loadCurrentUserProfile(user) {
+            currentUser = user;
+            const profileRef = db.collection('users').doc(user.uid);
+            const snapshot = await profileRef.get({ source: 'server' });
+            if (snapshot.exists) {
+                currentRole = snapshot.data().role || 'viewer';
+            } else if (ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+                currentRole = 'admin';
+                await profileRef.set({ uid: user.uid, email: user.email || '', displayName: user.displayName || 'Administrator', role: 'admin', createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            } else {
+                currentRole = 'viewer';
+                await profileRef.set({ uid: user.uid, email: user.email || '', displayName: user.displayName || user.email || 'Team member', role: 'viewer', createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            }
+            applyRolePermissions();
+        }
+        function loadTeamUsers() {
+            if (roleListener) roleListener();
+            roleListener = db.collection('users').onSnapshot(snapshot => {
+                const body = document.getElementById('teamTableBody');
+                if (!body) return;
+                const users = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+                body.innerHTML = users.length ? users.map(item => '<tr class="border-b"><td class="p-3"><div class="font-bold text-slate-800">' + escapeHtml(item.displayName || item.email || 'Team member') + '</div><div class="text-slate-500">' + escapeHtml(item.email || '') + '</div></td><td class="p-3 font-mono text-[10px]">' + escapeHtml(item.id) + '</td><td class="p-3">' + escapeHtml(ROLE_LABELS[item.role] || item.role || 'View Only') + '</td><td class="p-3 text-right"><button type="button" class="text-rose-600 font-bold" onclick="removeTeamRole(\'' + item.id + '\')">Set View Only</button></td></tr>').join('') : '<tr><td colspan="4" class="p-4 text-center text-slate-400">No team users found.</td></tr>';
+            }, err => {
+                console.error('Team users load failed:', err);
+                setCloudStatus('Team users could not load: ' + (err.code || '') + ' ' + err.message, false);
+            });
+        }
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        }
+        async function removeTeamRole(uid) {
+            if (currentRole !== 'admin' || uid === (currentUser && currentUser.uid) || !confirm('Set this team member to view-only access?')) return;
+            try {
+                await db.collection('users').doc(uid).set({ role: 'viewer', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                setCloudStatus('User role changed to View Only.', true);
+            } catch (err) {
+                alert('Role update failed: ' + (err.code || '') + ' ' + err.message);
+            }
+        }
+        document.getElementById('roleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (currentRole !== 'admin') return alert('Only Admin can manage roles.');
+            const uid = document.getElementById('roleUid').value.trim();
+            const email = document.getElementById('roleEmail').value.trim().toLowerCase();
+            const displayName = document.getElementById('roleName').value.trim();
+            const role = document.getElementById('roleValue').value;
+            if (!uid || !email || !displayName || !ROLE_LABELS[role]) return alert('Complete all fields with a valid role.');
+            try {
+                await db.collection('users').doc(uid).set({ uid, email, displayName, role, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                this.reset();
+                setCloudStatus('Role saved for ' + email + '. They can sign in using their Firebase Authentication account.', true);
+            } catch (err) {
+                alert('Role save failed: ' + (err.code || '') + ' ' + err.message);
+            }
+        });
 
         function setCloudStatus(message, ok = null) {
             const msg = document.getElementById('cloudMessage');
@@ -591,7 +739,7 @@
             }
         });
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             const gate = document.getElementById('loginGate');
             const emailLabel = document.getElementById('signedInEmail');
             const signOut = document.getElementById('signOutButton');
@@ -600,11 +748,27 @@
                 emailLabel.textContent = user.email || 'Signed in';
                 emailLabel.classList.remove('hidden');
                 signOut.classList.remove('hidden');
-                setCloudStatus('Signed in. Connecting to Firestore…');
-                startCloudListeners();
+                setCloudStatus('Loading your role and connecting to Firestore…');
+                try {
+                    await loadCurrentUserProfile(user);
+                    startCloudListeners();
+                } catch (err) {
+                    console.error('User role load failed:', err);
+                    setCloudStatus('User role could not load: ' + (err.code || '') + ' ' + err.message, false);
+                    alert('User role could not be loaded. Check the Firestore Rules deployment.');
+                }
             } else {
+                currentUser = null;
+                currentRole = 'viewer';
+                if (roleListener) { roleListener(); roleListener = null; }
+                cloudListenersStarted = false;
+                ['dashboard', 'inventory', 'billing', 'team'].forEach(tab => {
+                    const section = document.getElementById('tab-' + tab);
+                    if (section) section.classList.add('hidden');
+                });
                 gate.classList.remove('hidden');
                 emailLabel.classList.add('hidden');
+                document.getElementById('signedInRole').classList.add('hidden');
                 signOut.classList.add('hidden');
                 setCloudStatus('Sign in required to access cloud data.', false);
             }
@@ -698,7 +862,11 @@
         }
 
         function switchTab(tab) {
-            ['dashboard', 'inventory', 'billing'].forEach(t => {
+            if (tab === 'team' && currentRole !== 'admin') return requirePermission('team');
+            if (tab === 'inventory' && !hasPermission('inventory')) return requirePermission('inventory');
+            if (tab === 'billing' && !hasPermission('billing')) return requirePermission('billing');
+            if (tab === 'dashboard' && !hasPermission('dashboard')) return requirePermission('dashboard');
+            ['dashboard', 'inventory', 'billing', 'team'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 const nav = document.getElementById('nav-' + t);
                 if (nav) nav.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800/70 text-slate-400 hover:text-white font-semibold text-xs transition";
@@ -711,7 +879,8 @@
             const titles = {
                 dashboard: "Machinery Sales & Leads CRM",
                 inventory: "Food Processing Machinery Inventory",
-                billing: "Quotations, Proforma Invoices, Challans & Bills"
+                billing: "Quotations, Proforma Invoices, Challans & Bills",
+                team: "Team & Role Access Management"
             };
             document.getElementById('pageTitle').innerText = titles[tab];
         }
@@ -796,6 +965,7 @@
         }
 
         async function adjustStockCloud(id, delta) {
+            if (!requirePermission('inventoryWrite')) return;
             const machine = machines.find(item => item.id === id);
             if (!machine) return;
             const ref = db.collection('machines').doc(id);
@@ -874,6 +1044,8 @@
         }
 
         async function convertDoc(id, targetType) {
+            if (!requirePermission('billingWrite')) return;
+            if (targetType === 'Tax Invoice' && !requirePermission('invoiceWrite')) return;
             const original = docs.find(document => document.id === id);
             if (!original) {
                 alert('Document not found. Refresh the billing list and retry.');
@@ -910,8 +1082,17 @@
         }
 
         function openDocModal(defaultType = 'Proforma Invoice', prefillLead = null) {
+            if (!requirePermission('billingWrite')) return;
+            if (defaultType === 'Tax Invoice' && !requirePermission('invoiceWrite')) return;
             document.getElementById('docForm').reset();
-            document.getElementById('d_type').value = defaultType;
+            const typeSelect = document.getElementById('d_type');
+            Array.from(typeSelect.options).forEach(option => {
+                const isInvoice = option.value === 'Tax Invoice';
+                option.hidden = isInvoice && !hasPermission('invoiceWrite');
+                option.disabled = option.hidden;
+            });
+            if (defaultType === 'Tax Invoice' && !hasPermission('invoiceWrite')) defaultType = 'Proforma Invoice';
+            typeSelect.value = defaultType;
             document.getElementById('docItemsContainer').innerHTML = '';
 
             if (prefillLead) {
@@ -1242,11 +1423,13 @@
         }
 
         function openLeadModal() {
+            if (!requirePermission('leadsWrite')) return;
             document.getElementById('leadForm').reset();
             document.getElementById('leadModal').classList.remove('hidden');
             document.getElementById('leadModal').classList.add('flex');
         }
         function openMachineModal() {
+            if (!requirePermission('inventoryWrite')) return;
             document.getElementById('machineForm').reset();
             document.getElementById('machineModal').classList.remove('hidden');
             document.getElementById('machineModal').classList.add('flex');
@@ -1320,6 +1503,7 @@
         });
 
         async function deleteCloudDoc(col, id) {
+            if (currentRole !== 'admin') return alert('Only Admin can permanently delete records.');
             if (!confirm('Delete this item from cloud? This cannot be undone.')) return;
             try {
                 await db.collection(col).doc(id).delete();

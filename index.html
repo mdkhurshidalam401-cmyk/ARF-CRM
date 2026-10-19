@@ -577,9 +577,10 @@
                 const nav = document.getElementById('nav-' + tab);
                 if (nav) nav.classList.toggle('hidden', !moduleAccess[tab]);
                 const section = document.getElementById('tab-' + tab);
-                if (section) section.classList.toggle('hidden', !moduleAccess[tab] || !section.classList.contains('active-tab'));
+                if (section && !moduleAccess[tab]) section.classList.add('hidden');
             });
             document.getElementById('tab-team').classList.toggle('hidden', currentRole !== 'admin');
+            switchTab(currentRole === 'inventory' ? 'inventory' : 'dashboard');
             document.querySelectorAll('[onclick*="openLeadModal"]').forEach(el => el.classList.toggle('hidden', !hasPermission('leadsWrite')));
             document.querySelectorAll('[onclick*="quickQuoteFromLead"]').forEach(el => el.classList.toggle('hidden', !hasPermission('billingWrite')));
             document.querySelectorAll('[onclick*="openMachineModal"]').forEach(el => el.classList.toggle('hidden', !hasPermission('inventoryWrite')));

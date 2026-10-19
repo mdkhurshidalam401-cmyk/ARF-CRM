@@ -1261,29 +1261,62 @@
             openDocModal('Proforma Invoice', l);
         }
 
+        async function submitCloudForm(formId, collectionName, data, modalId, label) {
+            const form = document.getElementById(formId);
+            const button = form.querySelector('button[type="submit"]');
+            if (button && button.disabled) return;
+            if (button) {
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.textContent = 'Saving to cloud…';
+            }
+            setCloudStatus('Saving ' + label.toLowerCase() + ' to Firestore…');
+            try {
+                const ref = await db.collection(collectionName).add({
+                    ...data,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                const snapshot = await ref.get({ source: 'server' });
+                if (!snapshot.exists) throw new Error(label + ' was not confirmed on the Firestore server.');
+                closeModal(modalId);
+                setCloudStatus(label + ' saved and confirmed on Firestore. ID: ' + ref.id, true);
+            } catch (err) {
+                console.error(label + ' cloud save failed:', err);
+                setCloudStatus(label + ' NOT saved: ' + (err.code || '') + ' ' + err.message, false);
+                alert(label + ' save failed.\nCode: ' + (err.code || 'unknown') + '\nMessage: ' + err.message);
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = button.dataset.originalText || 'Save';
+                    delete button.dataset.originalText;
+                }
+            }
+        }
+
         document.getElementById('leadForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            db.collection("leads").add({
-                name: document.getElementById('l_name').value,
-                company: document.getElementById('l_company').value,
-                phone: document.getElementById('l_phone').value,
-                machine: document.getElementById('l_machine').value,
-                budget: Number(document.getElementById('l_budget').value || 0),
+            return submitCloudForm('leadForm', 'leads', {
+                name: document.getElementById('l_name').value.trim(),
+                company: document.getElementById('l_company').value.trim(),
+                phone: document.getElementById('l_phone').value.trim(),
+                machine: document.getElementById('l_machine').value.trim(),
+                budget: Math.max(0, Number(document.getElementById('l_budget').value) || 0),
                 status: document.getElementById('l_status').value
-            }).then(() => closeModal('leadModal')).catch(err => { console.error(err); alert("Lead save failed: " + err.message); });
+            }, 'leadModal', 'Lead');
         });
 
         document.getElementById('machineForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            db.collection("machines").add({
-                sku: document.getElementById('m_sku').value,
-                name: document.getElementById('m_name').value,
-                cat: "Processing Line",
-                spec: document.getElementById('m_spec').value,
-                hsn: "8438",
-                price: Number(document.getElementById('m_price').value || 0),
-                stock: Number(document.getElementById('m_stock').value || 0)
-            }).then(() => closeModal('machineModal')).catch(err => { console.error(err); alert("Machine save failed: " + err.message); });
+            return submitCloudForm('machineForm', 'machines', {
+                sku: document.getElementById('m_sku').value.trim(),
+                name: document.getElementById('m_name').value.trim(),
+                cat: 'Processing Line',
+                spec: document.getElementById('m_spec').value.trim(),
+                hsn: '8438',
+                price: Math.max(0, Number(document.getElementById('m_price').value) || 0),
+                stock: Math.max(0, Number(document.getElementById('m_stock').value) || 0)
+            }, 'machineModal', 'Inventory item');
         });
 
         async function deleteCloudDoc(col, id) {

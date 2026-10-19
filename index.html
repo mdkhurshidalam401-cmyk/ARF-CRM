@@ -552,9 +552,16 @@
             }, err => { console.error(err); setCloudStatus("Leads load failed: " + err.message, false); });
 
             db.collection("docs").onSnapshot(snapshot => {
+                // Firestore snapshot is the source of truth; always render from server-backed collection state.
                 docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderDocs(); updateKPIs();
-            }, err => { console.error(err); setCloudStatus("Billing documents load failed: " + err.message, false); });
+                if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) {
+                    setCloudStatus('Cloud connected. ' + docs.length + ' document(s) loaded from Firestore.', true);
+                }
+            }, err => {
+                console.error('Billing documents listener failed:', err);
+                setCloudStatus('Billing documents load failed: ' + (err.code || '') + ' ' + err.message, false);
+            });
         }
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -911,14 +918,20 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                const savedSnapshot = await ref.get();
-                if (!savedSnapshot.exists) throw new Error('Firestore write could not be read back. Check Firestore Rules.');
+                // Force a server read-back so a local/optimistic UI update cannot masquerade as a saved bill.
+                const savedSnapshot = await ref.get({ source: 'server' });
+                if (!savedSnapshot.exists) throw new Error('The bill write was not found on the Firestore server. Check project configuration and Firestore Rules.');
                 const savedDoc = { id: ref.id, ...savedSnapshot.data() };
-                docs = [savedDoc, ...docs.filter(x => x.id !== ref.id)];
+
+                // Reload the entire collection from the server before declaring success.
+                const serverDocsSnapshot = await db.collection('docs').get({ source: 'server' });
+                docs = serverDocsSnapshot.docs.map(documentSnapshot => ({ id: documentSnapshot.id, ...documentSnapshot.data() }));
+                if (!docs.some(item => item.id === ref.id)) throw new Error('Bill write returned success but the bill is missing from the server collection.');
+
                 closeModal('docModal');
                 switchTab('billing');
                 renderDocs(); updateKPIs();
-                setCloudStatus('Bill saved successfully in Firestore. Document ID: ' + ref.id, true);
+                setCloudStatus('Confirmed on Firestore server. ' + docs.length + ' document(s) loaded. Saved ID: ' + ref.id, true);
                 previewDoc(ref.id, savedDoc);
             } catch (err) {
                 console.error('Document cloud save failed:', err);
